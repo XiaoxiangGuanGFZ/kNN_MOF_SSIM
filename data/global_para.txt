@@ -5,20 +5,20 @@
 
 # ------- disaggregation setup ---------
 # the file path and name of daily rr data to be disaggregated
-FP_DAILY,D:/kNN_MOF_cp/data/rr_sim_daily.csv
+FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily.csv
 
 # the file path and name of the circulation pattern classification data
-FP_CP,D:/kNN_MOF_cp/data/cp_series.csv
+FP_CP,D:/kNN_MOF_SSIM/data/cp_series.csv
 
 # the file path and name of the observed hourly rainfall data
-FP_HOURLY,D:/kNN_MOF_cp/data/rr_obs_hourly.csv
+FP_HOURLY,D:/kNN_MOF_SSIM/data/rr_obs_hourly.csv
 
 # the file path to store the disaggregated hourly rr results
-FP_OUT,D:/kNN_MOF_cp/output/rr_sim_hourly.csv
+FP_OUT,D:/kNN_MOF_SSIM/output/rr_sim_hourly.csv
 
-FP_LOG,D:/kNN_MOF_cp/my.log
+FP_LOG,D:/kNN_MOF_SSIM/my.log
 
-# ------- the parameters in kNN_MOF_cp algorithm ---------
+# ------- the parameters in kNN_MOF_SSIM algorithm ---------
 # number of the rain stations
 N_STATION,134
 
@@ -31,7 +31,8 @@ T_CP,TRUE
 # summer: from May to October (5-10)
 # winter: from November to next April (11-4)
 SEASON,TRUE
-
+SUMMER_FROM,5
+SUMMER_TO,10
 # the CONTINUITY in candidates filtering; 1 or 3
 CONTINUITY,1
 
