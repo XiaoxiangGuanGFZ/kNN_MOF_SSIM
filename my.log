@@ -1,0 +1,25 @@
+------ Global parameter import completed: Tue Apr 09 09:45:02 2024
+FP_DAILY: D:/kNN_MOF_SSIM/data/rr_sim_daily.csv
+FP_HOULY: D:/kNN_MOF_SSIM/data/rr_obs_hourly.csv
+FP_CP:    D:/kNN_MOF_SSIM/data/cp_series.csv
+FP_OUT:   D:/kNN_MOF_SSIM/output/rr_sim_hourly.csv
+FP_LOG:   D:/kNN_MOF_SSIM/my.log
+------ Disaggregation parameters: -----
+T_CP: TRUE
+SEASON: TRUE
+N_STATION: 134
+CONTINUITY: 1
+WD: 1
+------ Import CP data series (Done): Tue Apr 09 09:45:02 2024
+* number of CP data rows: 15553
+* the first day: 1979-01-01 
+* the last day:  2021-07-31 
+------ Import daily rr data (Done): Tue Apr 09 09:45:02 2024
+* the total rows: 5479
+* the first day: 2006-01-01
+* the last day:  2020-12-31
+------ Import hourly rr data (Done): Tue Apr 09 09:45:03 2024
+* total hourly obs days: 5479
+* the first day: 2006-01-01
+* the last day:  2020-12-31
+------ Disaggregation daily2hourly (Done): Tue Apr 09 09:49:07 2024
