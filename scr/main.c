@@ -5,6 +5,7 @@
 #include <time.h>
 #include "def_struct.h"
 #include "Func_dataIO.h"
+#include "Func_Initialize.h"
 #include "Func_Disaggregate.h"
 
 /****** exit description *****
@@ -45,6 +46,8 @@ int main(int argc, char * argv[]) {
         134,
         "TRUE",
         "TRUE",
+        5,
+        10,
         1,
         1
     };  // define the global-parameter structure and initialization
@@ -117,6 +120,12 @@ int main(int argc, char * argv[]) {
         Para_df.N_STATION,
         df_rr_daily
     );
+    initialize_dfrr_d(
+        p_gp,
+        df_rr_daily,
+        df_cps,
+        nrow_rr_d,
+        nrow_cp);
     time(&tm);
     printf("------ Import daily rr data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rr data (Done): %s", ctime(&tm));
     
@@ -140,7 +149,13 @@ int main(int argc, char * argv[]) {
     int ndays_h;
     static struct df_rr_h df_rr_hourly[MAXrow];
     ndays_h = import_dfrr_h(Para_df.FP_HOURLY, Para_df.N_STATION, df_rr_hourly);
-
+    initialize_dfrr_h(
+        p_gp,
+        df_rr_hourly,
+        df_cps,
+        nrow_rr_d,
+        nrow_cp);
+    
     time(&tm);
     printf("------ Import hourly rr data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import hourly rr data (Done): %s", ctime(&tm));
     
