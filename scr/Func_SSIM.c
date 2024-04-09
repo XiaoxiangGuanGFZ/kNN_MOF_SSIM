@@ -1,3 +1,33 @@
+/*
+ * SUMMARY:      Func_SSIM.c
+ * USAGE:        the main algorithm of Structural Similarity Index
+ * AUTHOR:       Xiaoxiang Guan
+ * ORG:          Section Hydrology, GFZ
+ * E-MAIL:       guan@gfz-potsdam.de
+ * ORIG-DATE:    Apr-2024
+ * DESCRIPTION:  compuate the SSIM between two images. 
+ *               The SSIM represents how close the two images are to each other.
+ * DESCRIP-END.
+ * FUNCTIONS:    meanSSIM(); mean(); StandardDeviation(); covariance()
+ *               isNODATA();
+ * 
+ * COMMENTS:
+ * 
+ *
+ */
+
+/*******************************************************************************
+ * VARIABLEs:
+ * double *image                      - 1D double-type array for rainfall at multiple sites
+ * double NODATA                      - the value of NODATA
+ * int size                           - number of rain sites within the domain
+ * double L                           - the maximum value in the rainfall images
+ * double *k                          - parameters in SSIM algorithm, 3-elements array
+ * double *power                      - 3 power parameters in SSIM algorithm, 3-elements array
+ * 
+ * 
+********************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -8,7 +38,7 @@ double meanSSIM(
     double *image1,
     double *image2,
     double NODATA,
-    double L,
+    double L,   // maximum value in the image
     int size,
     double *k,
     double *power
@@ -73,10 +103,10 @@ double StandardDeviation(
     double square_sum = 0.0;
     for (size_t i = 0; i < size; i++)
     {
-        if (isNODATA(*(image+i), NODATA) == 0)
+        if (isNODATA(*(image + i), NODATA) == 0)
         {
             counts += 1;
-            square_sum += pow(*(image+i) - image_mean, 2);
+            square_sum += pow(*(image + i) - image_mean, 2);
         }
     }
     if (counts <= 1)
@@ -100,7 +130,7 @@ double covariance(
     double sum = 0.0;
     for (size_t i = 0; i < size; i++)
     {
-        if (isNODATA(*(image1+i), NODATA) == 0)
+        if (isNODATA(*(image1 + i), NODATA) == 0)
         {
             counts += 1;
             sum += (*(image1 + i) - image1_mean) * (*(image2 + i) - image2_mean);

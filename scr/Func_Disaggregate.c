@@ -1,9 +1,36 @@
+/*
+ * SUMMARY:      Func_Disaggregate.c
+ * USAGE:        main algorithm of method-of-fragments for temporal disaggregation
+ * AUTHOR:       Xiaoxiang Guan
+ * ORG:          Section Hydrology, GFZ
+ * E-MAIL:       guan@gfz-potsdam.de
+ * ORIG-DATE:    Apr-2024
+ * DESCRIPTION:  
+ *               
+ *               
+ *               
+ * DESCRIP-END.
+ * FUNCTIONS:    
+ *               
+ * 
+ * COMMENTS:
+ * 
+ *  
+ */
+
+/*******************************************************************************
+ * VARIABLEs:
+ * 
+*****/
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
 #include "def_struct.h"
+#include "Func_SSIM.h"
 
 void kNN_MOF(
     struct df_rr_h *p_rrh,
@@ -69,122 +96,7 @@ void kNN_MOF(
         } else {
             // Toggle_wd == 1;
             // this is a rainy day; we will disaggregate it.
-            n_cans_c = Toggle_CONTINUITY(
-                p_rrh,
-                p_rrd + i,  // pointing to the target day struct
-                p_gp,
-                ndays_h,
-                pool_cans,
-                p_gp->WD  // 
-                /****
-                 * WD == 0, strict; 
-                 * wet-dry status vectors match with each other 
-                 *      (candidate and target day) 
-                 *      at multiple rain gauges perfectly.
-                 * typically, WD == 1, flexible in wet-dry status filtering 
-                 */
-            );
-            // printf("number of candidates after continuity filtering (n_cans_c): %d\n", n_cans_c);
-            // printf("WD-0: ncan: %d\n", n_cans_c);
-            if (n_cans_c < 2 && p_gp->WD == 0) {
-                /***
-                 * when the number of candidate days 
-                 *      after strict (WD == 0) wet-dry status filter 
-                 *      is less than 2.
-                 * */ 
-                n_cans_c = Toggle_CONTINUITY(
-                            p_rrh,
-                            p_rrd + i,
-                            p_gp,
-                            ndays_h,
-                            pool_cans,
-                            1 
-                        );
-                // printf("WD-1: ncan: %d\n", n_cans_c);
-            }
-            if (n_cans_c == 0) {
-                printf("the target day %d-%02d-%02d has no matching hourly candidate!\n",
-                       (p_rrd + i)->date.y, (p_rrd + i)->date.m, (p_rrd + i)->date.d);
-                printf("Programm terminated!");
-                exit(2);
-            } else if (n_cans_c == 1) {
-                /**
-                 * only one candidate fits here after wet-dry status filtering 
-                 *      then we just skip other filtering conditions, like
-                 *      CP or seasonality.
-                */
-                fragment = pool_cans[0];
-            } else {
-                // n_cans_c > 1;
-                // candidates filtering based on CP and seasonality
-                n_can=0;
-                for (int t = 0; t < n_cans_c; t++) {
-                    toggle_cp = 0; // initialize the toggle_cp for every iteration
-                    if (strncmp(p_gp->T_CP, "TRUE", 4) == 0) {
-                        // disaggregation conditioned on circulation pattern classification
-                        if (
-                            Toogle_CP( (p_rrh + pool_cans[t])->date, p_cp, nrow_cp ) == Toogle_CP( (p_rrd + i)->date, p_cp, nrow_cp )
-                        ) {
-                            // only continue when target and candidate day share the same cp class.
-                            if (strncmp(p_gp->SEASON, "TRUE", 4) == 0) {
-                                // seasonality: summer and winter
-                                if (
-                                    ((p_rrh + pool_cans[t])->date.m >= 5 && (p_rrh + pool_cans[t])->date.m <= 10) == 
-                                    ((p_rrd + i)->date.m >= 5 && (p_rrd + i)->date.m <= 10) 
-                                ) {
-                                    toggle_cp = 1;
-                                }
-                            } else {
-                                // only cp, without seasonality
-                                toggle_cp = 1;
-                            }
-                        } 
-                    } else {
-                        /***
-                         * p_gp->T_CP != "TRUE": 
-                         *      the disaggregation conditioned only on seasonality (12 months)
-                        */
-                        if (
-                            (p_rrh + pool_cans[t])->date.m == (p_rrd + i)->date.m
-                        ) {
-                            toggle_cp = 1;
-                        }
-                    }
-                    if (toggle_cp == 1) {
-                        // this candidate selected into (final) pool
-                        pool_cans[n_can] = pool_cans[t];  // rewrite pool_cans[] array; t is always >= n_can
-                        n_can++;
-                    }
-                }
-                // printf("number of candidates after all filtering (n_can): %d\n", n_can);
-                /* printf("Candidates: \n");
-                for (int ii = 0; ii < n_can; ii++) {
-                    printf("%d\n", pool_cans[ii]);
-                } */ 
-                /******** filtering is done: *********/
-                if (n_can == 1) {
-                    /***
-                     * after candidates filtering, only one left.
-                    */
-                    fragment = pool_cans[0];
-                } else {
-                    // n_can == 0 or n_can > 1
-                    if (n_can == 0) {
-                        /***
-                         * after cp and seasonality filtering, 
-                         *      there is not candidates any more 
-                         *      (toggle_cp always equals to 0).
-                         *      pool_cans remains unchanged.
-                         * Then we just discard the cp and seasonality filtering
-                         *      in order to make the disaggregation possible.
-                        */
-                        n_can = n_cans_c;
-                    }
-                    /* kNN sampling, based on the qualified candidates pool */
-                    fragment = kNN_sampling(p_rrd+i, p_rrh, p_gp, pool_cans, n_can);
-                }
-                // printf("%d-%d-%d: fragment: %d\n", (p_rrd+i)->date.y, (p_rrd+i)->date.m, (p_rrd+i)->date.d, fragment);
-            }
+            
             /*assign the sampled fragments to target day (disaggregation)*/
             Fragment_assign(p_rrh, &df_rr_h_out, p_gp, fragment);
         }
@@ -263,40 +175,6 @@ int Toggle_CONTINUITY(
     return n_cans;
 }
 
-int Toogle_CP(
-    struct Date date,
-    struct df_cp *p_cp,
-    int nrow_cp
-){
-    /*************
-     * Description:
-     *      derive the cp value (class) of the day based on date stamp (y-m-d)
-     * Parameters:
-     *      date: a Date struct, conaining y, m and d
-     *      p_cp: pointing to the cp data struct array
-     *      nrow_cp: total rows of cp observations
-     * Output:
-     *      return the derived cp value
-     * **********/
-    int i;
-    int cp = -1;
-    for (i = 0; i < nrow_cp; i++) {
-        if (
-            (p_cp+i)->date.y == date.y && (p_cp+i)->date.m == date.m && (p_cp+i)->date.d == date.d
-        ) {
-            cp = (p_cp+i)->cp;
-            break; // terminate the loop directly
-        }
-    }
-    if (cp == -1) {
-        printf(
-            "Program terminated: cannot find the cp class for the date %d-%02d-%02d\n",
-            date.y, date.m, date.d
-        );
-        exit(2);
-    }
-    return cp;
-}
 
 int kNN_sampling(
     struct df_rr_d *p_rrd,
@@ -474,28 +352,4 @@ void Fragment_assign(
             }
         }
     }
-    /*
-    int toggle = 1;
-    for (j=0; j<p_gp->N_STATION;j++) {
-        if (p_out->rr_d[j] > 0.0 && (p_rrh + fragment)->rr_d[j] <= 0.0 ) {
-            toggle = 0;
-            break;
-        }
-    }
-    if (toggle == 1) {
-        for (j=0; j<p_gp->N_STATION; j++) {
-            if (p_out->rr_d[j] > 0.0) {
-                for (h=0; h<24; h++) {
-                    p_out->rr_h[j][h] = p_out->rr_d[j] * (p_rrh + fragment)->rr_h[j][h] / (p_rrh + fragment)->rr_d[j];
-                }
-            } else {
-                // no rain at station j
-                for (h=0; h<24; h++) {p_out->rr_h[j][h] = 0.0;}
-            }
-        }
-    } else {
-        printf("The target day %d-%02d-%02d disaggregation failed, please check or retry!\n---Programm terminated!", 
-            p_out->date.y, p_out->date.m, p_out->date.d);
-        exit(0);
-    } */
 }

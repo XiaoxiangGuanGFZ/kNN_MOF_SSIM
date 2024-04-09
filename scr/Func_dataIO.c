@@ -1,9 +1,38 @@
+/*
+ * SUMMARY:      Func_dataIO.c
+ * USAGE:        read and write data from ASCII-format files
+ * AUTHOR:       Xiaoxiang Guan
+ * ORG:          Section Hydrology, GFZ
+ * E-MAIL:       guan@gfz-potsdam.de
+ * ORIG-DATE:    Apr-2024
+ * DESCRIPTION:  read data: 
+ *               global parameters data (configuration)
+ *               daily multi-site rainfall to be disaggregated
+ *               and hourly rainfall data to provide fragments
+ *               write data: write the outputed hourly data into ASCII-format file
+ * DESCRIP-END.
+ * FUNCTIONS:    import_global(); removeLeadingSpaces(); import_dfrr_d(); import_dfrr_h()
+ *               import_df_cp(); Write_df_rr_h();
+ * 
+ * COMMENTS:
+ * 
+ *  
+ */
+
+/*******************************************************************************
+ * VARIABLEs:
+ * char fname[]                 - file path to the global parameter file
+ * struct Para_global *p_gp     - point to global para structure
+ * int N_STATION                - number of rain sites 
+*****/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
 #include "def_struct.h"
+#include "Func_SSIM.h"
 
 void import_global(
     char fname[], struct Para_global *p_gp
@@ -91,8 +120,8 @@ void import_global(
         }
     }
     fclose(fp);
-    
 }
+
 void removeLeadingSpaces(char *str) {
     if (str != NULL) {
         int i, j = 0;
