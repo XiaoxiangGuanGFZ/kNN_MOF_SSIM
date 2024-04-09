@@ -65,6 +65,10 @@ void import_global(
                     strcpy(p_gp->FP_HOURLY, token2);
                 } else if (strncmp(token, "SEASON", 6) == 0) {
                     strcpy(p_gp->SEASON, token2);
+                } else if (strncmp(token, "SUMMER_FROM", 6) == 0) {
+                    strcpy(p_gp->SEASON, token2);
+                } else if (strncmp(token, "SUMMER_TO", 6) == 0) {
+                    strcpy(p_gp->SEASON, token2);
                 } else if (strncmp(token, "T_CP", 4) == 0) {
                     strcpy(p_gp->T_CP, token2);
                 } else if (strncmp(token, "N_STATION", 9) == 0) {
