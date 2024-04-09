@@ -18,7 +18,7 @@ set(SOURCE_FILES
 
 project(kNN_MOF_SSIM)  # Set your project name here
 # Add the executable target
-add_executable(a ${SOURCE_FILES})
+add_executable(kNN_MOF_SSIM ${SOURCE_FILES})
 
 
 ## cmake -G "MinGW Makefiles" .
