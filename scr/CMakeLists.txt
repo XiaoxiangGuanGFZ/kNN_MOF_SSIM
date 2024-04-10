@@ -13,6 +13,8 @@ set(CMAKE_CXX_COMPILER "C:/MinGW/bin/g++.exe")  # Uncomment and replace "path/to
 set(SOURCE_FILES
     main.c
     Func_dataIO.c
+    Func_Initialize.c
+    Func_SSIM.c
     Func_Disaggregate.c
 )
 
