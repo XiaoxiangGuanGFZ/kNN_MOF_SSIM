@@ -310,7 +310,7 @@ void Write_df_rr_h(
         for (j=1;j<p_gp->N_STATION;j++){
             fprintf(
                 p_FP_OUT,
-                ",%.3f", p_out->rr_h[j][h]
+                ",%.1f", p_out->rr_h[j][h]
             );
         }
         fprintf(p_FP_OUT, "\n"); // print "\n" (newline) after one row
