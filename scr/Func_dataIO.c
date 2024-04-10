@@ -317,7 +317,7 @@ void Write_df_rr_h(
     for (h=0;h<24;h++) {
         fprintf(
             p_FP_OUT,
-            "%d,%d,%d,%d,%.3f", 
+            "%d,%d,%d,%d,%.1f", 
             p_out->date.y, p_out->date.m, p_out->date.d, h, 
             p_out->rr_h[0][h]
         ); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
