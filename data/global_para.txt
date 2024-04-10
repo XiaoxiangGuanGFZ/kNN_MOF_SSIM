@@ -31,8 +31,11 @@ T_CP,TRUE
 # summer: from May to October (5-10)
 # winter: from November to next April (11-4)
 SEASON,TRUE
+
 SUMMER_FROM,5
+
 SUMMER_TO,10
+
 # the CONTINUITY in candidates filtering; 1 or 3
 CONTINUITY,1
 
@@ -40,3 +43,10 @@ CONTINUITY,1
 # WD:0 very strict, only the candidates with exact the same wet-dry status of target day can be selected
 # WD:1 flexible, the candidates with same wet-dry status covering that of target day will be selected
 WD,1
+
+# Structural Similarity Index (SSIM) parameters
+SSIM_K,0.01,0.03,0.0212
+
+SSIM_POWER,1,1,1
+
+NODATA,-99
