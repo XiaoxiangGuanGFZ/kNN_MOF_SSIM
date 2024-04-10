@@ -69,6 +69,10 @@ struct Para_global
         int CONTINUITY;         // continuity day
         int WD;                 // the flexibility level of wet-dry status in candidates filtering
         int CLASS_N;
+        double L;
+        double k[3];
+        double power[3];
+        double NODATA;
     };
 
 
