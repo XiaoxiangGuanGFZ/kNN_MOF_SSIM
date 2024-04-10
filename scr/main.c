@@ -6,6 +6,7 @@
 #include "def_struct.h"
 #include "Func_dataIO.h"
 #include "Func_Initialize.h"
+#include "Func_SSIM.h"
 #include "Func_Disaggregate.h"
 
 /****** exit description *****
@@ -37,21 +38,9 @@ int main(int argc, char * argv[]) {
         this should be the only extern input for this program */
     time_t tm;  //datatype from <time.h>
     time(&tm);
-    struct Para_global Para_df = {
-        "D:/kNN_MOD_cp/data/test_rr_daily.txt",
-        "D:/kNN_MOF_cp/data/test_cp_series.txt",
-        "D:/kNN_MOF_cp/data/test_rr_obs_hourly.txt",
-        "D:/kNN_MOF_cp/output/",
-        "D:/kNN_MOF_cp/my_disaggregation.log",
-        134,
-        "TRUE",
-        "TRUE",
-        5,
-        10,
-        1,
-        1
-    };  // define the global-parameter structure and initialization
-    struct Para_global * p_gp;      // give a pointer to global_parameter structure
+
+    struct Para_global Para_df;     // define the global-parameter structure
+    struct Para_global *p_gp;      // give a pointer to global_parameter structure
     p_gp = &Para_df;
     
     /******* import the global parameters ***********
@@ -76,14 +65,22 @@ int main(int argc, char * argv[]) {
         p_gp->FP_DAILY, p_gp->FP_HOURLY, p_gp->FP_CP, p_gp->FP_OUT, p_gp->FP_LOG);
 
     printf(
-        "------ Disaggregation parameters: -----\nT_CP: %s\nSEASON: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\n",
-        p_gp->T_CP, p_gp->SEASON, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD
+        "------ Disaggregation parameters: -----\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nSEASON: %s\n",
+        p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->SEASON
     );
     fprintf(
         p_log,
-        "------ Disaggregation parameters: -----\nT_CP: %s\nSEASON: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\n",
-        p_gp->T_CP, p_gp->SEASON, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD
+        "------ Disaggregation parameters: -----\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nSEASON: %s\n",
+        p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->SEASON
     );
+    if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
+    {
+        printf("SUMMER: %d-%d\n", p_gp->SUMMER_FROM, p_gp->SUMMER_TO);
+        fprintf(p_log,"SUMMER: %d-%d\n", p_gp->SUMMER_FROM, p_gp->SUMMER_TO);
+    }
+    printf("SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\n", p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2]);
+    fprintf(p_log, "SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\n", p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2]);
+    
     /******* import circulation pattern series *********/
     
     static struct df_cp df_cps[MAXrow];
@@ -174,9 +171,11 @@ int main(int argc, char * argv[]) {
         df_rr_hourly[ndays_h-1].date.y, df_rr_hourly[ndays_h-1].date.m, df_rr_hourly[ndays_h-1].date.d
     );
 
+    /****** maxima of rainfall value (L value in SSIM algorithm) *******/
+    initialize_L(df_rr_hourly, df_rr_daily, p_gp, nrow_rr_d, ndays_h);
     /****** Disaggregation: kNN_MOF_cp *******/
-    
-    kNN_MOF(
+    printf("------ Disaggregating: ... \n");
+    kNN_MOF_SSIM(
         df_rr_hourly,
         df_rr_daily,
         df_cps,
