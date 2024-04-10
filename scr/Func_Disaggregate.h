@@ -1,7 +1,7 @@
 #ifndef FUNC_DISAGGREGATE
 #define FUNC_DISAGGREGATE
 
-void kNN_MOF(
+void kNN_MOF_SSIM(
     struct df_rr_h *p_rrh,
     struct df_rr_d *p_rrd,
     struct df_cp *p_cp,
@@ -11,22 +11,13 @@ void kNN_MOF(
     int nrow_cp
 );
 
-int Toggle_CONTINUITY(
-    struct df_rr_h *p_rrh,
-    struct df_rr_d *p_rrd,
-    struct Para_global *p_gp,
-    int ndays_h,
-    int pool_cans[],
-    int WD // Wet-dry status matching: strict:0; flexible:1
+
+int Toggle_WD(
+    int N_STATION,
+    double *p_rr_d
 );
 
-int Toogle_CP(
-    struct Date date,
-    struct df_cp *p_cp,
-    int nrow_cp
-);
-
-int kNN_sampling(
+int kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
     struct Para_global *p_gp,

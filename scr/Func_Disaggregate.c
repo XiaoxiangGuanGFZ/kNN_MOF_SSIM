@@ -32,7 +32,7 @@
 #include "def_struct.h"
 #include "Func_SSIM.h"
 
-void kNN_MOF(
+void kNN_MOF_SSIM(
     struct df_rr_h *p_rrh,
     struct df_rr_d *p_rrd,
     struct df_cp *p_cp,
@@ -52,6 +52,7 @@ void kNN_MOF(
      * *****************/
     int i, j, h, k, Toggle_wd;
     int toggle_cp;
+    int class_t, class_c;
     int skip=0;
     struct df_rr_h df_rr_h_out; // this is a struct variable, not a struct array;
     // struct df_rr_h df_rr_h_candidates[100];
@@ -59,7 +60,6 @@ void kNN_MOF(
     // p_gp->CONTINUITY: 3, skip = 1;
     skip = (p_gp->CONTINUITY - 1) / 2;
     int pool_cans[MAXrow];  // the index of the candidates (a pool); the size is sufficient 
-    int n_cans_c=0;  // the number of candidates after continuity filtering
     int n_can; //the number of candidates after all conditioning (cp and seasonality)
     int fragment; // the index of df_rr_h structure with the final chosed fragments
     
@@ -74,7 +74,6 @@ void kNN_MOF(
         df_rr_h_out.rr_d = (p_rrd + i)->p_rr; // is this valid?; address transfer
         df_rr_h_out.rr_h = calloc(p_gp->N_STATION, sizeof(double) * 24);  // allocate memory (stack);
         Toggle_wd = 0;  // initialize with 0 (non-rainy)
-        n_cans_c = 0;
         for (j=0; j < p_gp->N_STATION; j++) {
             if (*((p_rrd + i)->p_rr + j) > 0.0) {
                 // any gauge with rr > 0.0
@@ -96,7 +95,18 @@ void kNN_MOF(
         } else {
             // Toggle_wd == 1;
             // this is a rainy day; we will disaggregate it.
-            
+            n_can = 0;
+            class_t = (p_rrd + i)->class;
+            for (j = 0; j < ndays_h; j++)
+            {
+                class_c = (p_rrh + j)->class; // the class of the candidate day
+                if (class_c == class_t && Toggle_WD(p_gp->N_STATION, (p_rrh + j)->rr_d) == 1)
+                {
+                    pool_cans[n_can] = j;
+                    n_can += 1;
+                }
+            }
+            fragment = kNN_SSIM_sampling(p_rrd + i, p_rrh, p_gp, pool_cans, n_can);
             /*assign the sampled fragments to target day (disaggregation)*/
             Fragment_assign(p_rrh, &df_rr_h_out, p_gp, fragment);
         }
@@ -109,74 +119,29 @@ void kNN_MOF(
     fclose(p_FP_OUT);
 }
 
-int Toggle_CONTINUITY(
-    struct df_rr_h *p_rrh,
-    struct df_rr_d *p_rrd,
-    struct Para_global *p_gp,
-    int ndays_h,
-    int pool_cans[],
-    int WD // Wet-dry status matching: strict:0; flexible:1
-){
-    /*****************
-     * Description:
-     *      wet-dry status continuity matching check
-     * Parameters:
-     *      p_rrh: pointing to df_rr_hourly struct array (all the hourly rr observations);
-     *      p_rrd: pointing to target day (to be disaggregated);
-     *      p_gp: pointing to global parameter struct;
-     *      ndays_h: number of days in hourly rr data;
-     *      pool_cans: the pool of candidate index;
-     *      WD: matching flexcibility, global parameter
-     * Output:
-     *      - the number of candidates (pool size)
-     *      - bring back the pool_cans array
-     * ***************/
-    int i, j, k, skip, toggle_WD;
-    // toggle_WD: whether wet-dry status match; 1: match; 0: not match
-    int n_cans=0;  // number of candidates fullfilling the CONTINUITY criteria (output)
-    skip = (p_gp->CONTINUITY - 1) / 2; // p_gp->CONTINUITY == 1: skip=0; p_gp->CONTINUITY == 3: skip=1
-    
-    for (k=skip; k < ndays_h-skip; k++) { 
-        // iterate each day in hourly observations
-        toggle_WD = 1;
-        for (i=0-skip; i < 1+skip; i++) {
-            // here we have to compare vectors between candidates and target; 
-            //      CONTINUITY=1: skip=0; CONTINUITY=3: skip=1; 
-            for (j=0; j < p_gp->N_STATION; j++){
-                if (WD == 0) {
-                    /*strict wet-dry matching*/
-                    // the wet-dry status in each vector should be completely the same with each other.
-                    if (
-                        !(
-                            ((p_rrd + i)->p_rr[j] > 0.0) == ((p_rrh + k + i)->rr_d[j] > 0.0)
-                        )
-                    ) {
-                        toggle_WD = 0;break;
-                    } else {
-                        continue;
-                    }
-                } else {
-                    // WD == 1
-                    /* flexible wet-dry status matching*/
-                    if (
-                        ((p_rrd + i)->p_rr[j] > 0.0) && ((p_rrh + k + i)->rr_d[j] <= 0.0)
-                    ) {
-                        toggle_WD = 0;break;
-                    }
-                }
-            }
-        }
-        if (toggle_WD == 1) {
-            *(pool_cans + n_cans) = k;
-            n_cans++;
-            // printf("n_cans: %d\n", n_cans);
+int Toggle_WD(
+    int N_STATION,
+    double *p_rr_d
+)
+{
+    /***********
+     * rainy day (wet, WD == 1) or non rainy day (dry, WD == 0)
+    */
+    int WD = 0;
+    for (size_t i = 0; i < N_STATION; i++)
+    {
+        if (*(p_rr_d + i) > 0.0)
+        {
+            WD = 1;
+            break;
         }
     }
-    return n_cans;
+    return WD;
 }
 
 
-int kNN_sampling(
+
+int kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
     struct Para_global *p_gp,
@@ -185,11 +150,11 @@ int kNN_sampling(
 ){
     /**************
      * Description:
-     *      - compute the manhattan distance of rr between target and candidate days
-     *      - sort the distance in the increasing order
-     *      - select the sqrt(n_can) largest distance
-     *      - weights defined as inverse of distance
-     *      - sample one distance 
+     *      - compute the SSIM index of rr between target and candidate days
+     *      - sort the distance in the decreasing order
+     *      - select the sqrt(n_can) largest SSIM
+     *      - weights defined based on SSIM: higher SSIM, heavier weight
+     *      - sample one candidate 
      * Parameters:
      *      p_rrd: the target day (structure pointer)
      *      p_rrh: pointing to the hourly rr obs structure array
@@ -205,24 +170,36 @@ int kNN_sampling(
     double rd = 0.0;  // a random decimal value between 0.0 and 1.0
 
     // double distance[MAXrow]; 
-    double *distance;  // the distance between target day and candidate days
-    distance = malloc(n_can * sizeof(double));
+    double *SSIM;  // the distance between target day and candidate days
+    SSIM = malloc(n_can * sizeof(double));
     int size_pool; // the k in kNN
     int index_out; // the output of this function: the sampled fragment from candidates pool
-    /**manhattan distance*/
+    /** compute mean-SSIM between target and candidate images **/
     for (i=0; i<n_can; i++){
-        *(distance+i) = 0.0;
-        for (j=0; j<p_gp->N_STATION; j++){
-            *(distance+i) += fabs(p_rrd->p_rr[j] - (p_rrh + pool_cans[i])->rr_d[j]);
-        }
+        *(SSIM + i) = -1;
+        *(SSIM + i) = meanSSIM(
+            p_rrd->p_rr,
+            (p_rrh + pool_cans[i])->rr_d,
+            p_gp->NODATA,
+            p_gp->L, // maximum value in the image
+            p_gp->N_STATION,
+            p_gp->k,
+            p_gp->power);
         // printf("candidate index: %d, distance: %.2f\n", pool_cans[i], *(distance+i));
     }
-    // sort the distance in the increasing order
-    for (i=0; i<n_can-1; i++) {
-        for (j=i+1; j<n_can; j++) {
-            if (distance[i] > distance[j]) {
-                temp_c = pool_cans[i]; pool_cans[i] = pool_cans[j]; pool_cans[j] = temp_c;
-                temp_d = distance[i]; distance[i] = distance[j]; distance[j] = temp_d;
+    // sort the SSIM in the decreasing order
+    for (i = 0; i < n_can - 1; i++)
+    {
+        for (j = i + 1; j < n_can; j++)
+        {
+            if (SSIM[i] < SSIM[j])
+            {
+                temp_c = pool_cans[i];
+                pool_cans[i] = pool_cans[j];
+                pool_cans[j] = temp_c;
+                temp_d = SSIM[i];
+                SSIM[i] = SSIM[j];
+                SSIM[j] = temp_d;
             }
         }
     }
@@ -232,7 +209,7 @@ int kNN_sampling(
         printf("candidate index: %d, distance: %.2f\n", pool_cans[i], *(distance+i));
     }
     */
-    if (distance[0] <= 0.0) {
+    if (SSIM[0] == 1.0) {
         // the closest candidate with the distance of 0.0, then we skip the weighted sampling.
         index_out = pool_cans[0];
     } else {
@@ -244,15 +221,15 @@ int kNN_sampling(
         size_pool = (int)sqrt(n_can) + 1; 
         /***
          * compute the weights for kNN sampling
-         *      the weight is defined as distance inverse
+         *      the weight is defined based on SSIM; higher SSIM, heavier weight
          * dynamic memory allocation for the double array - weights
          * */
         double *weights;
         weights = malloc(size_pool * sizeof(double)); // a double array with the size of size_pool
-        double w_sum=0.0; // the sum of the inversed distances
+        double w_sum = 0.0; 
         for (i=0; i<size_pool; i++){
-            *(weights+i) = 1/distance[i];
-            w_sum += 1/distance[i];
+            *(weights+i) = SSIM[i] + 1;
+            w_sum += SSIM[i] + 1;
         }
         for (i=0; i<size_pool; i++){
             *(weights+i) /= w_sum; // reassignment
@@ -264,27 +241,21 @@ int kNN_sampling(
         for (i=1; i<size_pool; i++){
             *(weights_cdf + i) = *(weights_cdf + i-1) + weights[i];
         }
-        /* generate a random number, then an fragments index*/
-        int toggle = 0;
-        while (toggle == 0)
-        {
-            toggle = 1;
-            index_out = weight_cdf_sample(size_pool, pool_cans, weights_cdf);
-            for (j = 0; j < p_gp->N_STATION; j++)
-            {
-                if (p_rrd->p_rr[j] > 0.0 && (p_rrh + index_out)->rr_d[j] <= 0.0)
-                {
-                    toggle = 0;
-                    break;
-                }
-            }
-        }    
+        /* generate a random number, then select the fragments index*/
+        index_out = weight_cdf_sample(size_pool, pool_cans, weights_cdf);
+        // for (j = 0; j < p_gp->N_STATION; j++)
+        // {
+        //     if (p_rrd->p_rr[j] > 0.0 && (p_rrh + index_out)->rr_d[j] <= 0.0)
+        //     {
+        //     }
+        // }
         free(weights);
         free(weights_cdf);
     }
-    free(distance);
+    free(SSIM);
     return index_out;
 }
+
 
 double get_random() { return ((double)rand() / (double)RAND_MAX); }
 int weight_cdf_sample(
@@ -333,14 +304,24 @@ void Fragment_assign(
      * Output:
      *      p_out
      * *******/
-    int j,h;
+    int j, h;
     for (j = 0; j < p_gp->N_STATION; j++)
     {
         if (p_out->rr_d[j] > 0.0)
         {
-            for (h = 0; h < 24; h++)
+            if ((p_rrh + fragment)->rr_d[j] <= 0.0)
             {
-                p_out->rr_h[j][h] = p_out->rr_d[j] * (p_rrh + fragment)->rr_h[j][h] / (p_rrh + fragment)->rr_d[j];
+                for (h = 0; h < 24; h++)
+                {
+                    p_out->rr_h[j][h] = p_out->rr_d[j] * 1 / 24;
+                }
+            }
+            else
+            {
+                for (h = 0; h < 24; h++)
+                {
+                    p_out->rr_h[j][h] = p_out->rr_d[j] * (p_rrh + fragment)->rr_h[j][h] / (p_rrh + fragment)->rr_d[j];
+                }
             }
         }
         else
@@ -353,3 +334,4 @@ void Fragment_assign(
         }
     }
 }
+
