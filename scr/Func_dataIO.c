@@ -32,7 +32,7 @@
 #include <ctype.h>
 
 #include "def_struct.h"
-#include "Func_SSIM.h"
+#include "Func_dataIO.h"
 
 void import_global(
     char fname[], struct Para_global *p_gp
@@ -94,10 +94,10 @@ void import_global(
                     strcpy(p_gp->FP_HOURLY, token2);
                 } else if (strncmp(token, "SEASON", 6) == 0) {
                     strcpy(p_gp->SEASON, token2);
-                } else if (strncmp(token, "SUMMER_FROM", 6) == 0) {
-                    strcpy(p_gp->SEASON, token2);
-                } else if (strncmp(token, "SUMMER_TO", 6) == 0) {
-                    strcpy(p_gp->SEASON, token2);
+                } else if (strncmp(token, "SUMMER_FROM", 11) == 0) {
+                    p_gp->SUMMER_FROM = atoi(token2);   
+                } else if (strncmp(token, "SUMMER_TO", 9) == 0) {
+                    p_gp->SUMMER_TO = atoi(token2);   
                 } else if (strncmp(token, "T_CP", 4) == 0) {
                     strcpy(p_gp->T_CP, token2);
                 } else if (strncmp(token, "N_STATION", 9) == 0) {
@@ -110,6 +110,21 @@ void import_global(
                     strcpy(p_gp->FP_LOG, token2);
                 } else if (strncmp(token, "CONTINUITY", 10) == 0) {
                     p_gp->CONTINUITY = atoi(token2);   
+                } else if (strncmp(token, "SSIM_K", 6) == 0) {
+                    // printf("%s\n", token2);
+                    p_gp->k[0] = atof(token2);
+                    p_gp->k[1] = atof(strtok(NULL, ",\r"));
+                    p_gp->k[2] = atof(strtok(NULL, ",\r\n"));
+
+                    // sscanf(token2, "%f,%f,%f", p_gp->k + 0, p_gp->k + 1, p_gp->k + 2);
+                } else if (strncmp(token, "SSIM_POWER", 10) == 0) {
+                    // printf("%s\n", token2);
+                    p_gp->power[0] = atof(token2);
+                    p_gp->power[1] = atof(strtok(NULL, ",\r"));
+                    p_gp->power[2] = atof(strtok(NULL, ",\r\n"));
+                    // sscanf(token2, "%f,%f,%f", p_gp->power + 0, p_gp->power + 1, p_gp->power + 2);
+                } else if (strncmp(token, "NODATA", 6) == 0) {
+                    p_gp->NODATA = atof(token2);
                 } else {
                     printf(
                         "Error in opening global parameter file: unrecognized parameter field!"
