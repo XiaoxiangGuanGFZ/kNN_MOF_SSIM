@@ -1,6 +1,8 @@
 #ifndef FUNC_DISAGGREGATE
 #define FUNC_DISAGGREGATE
 
+extern FILE *p_SSIM;
+
 void kNN_MOF_SSIM(
     struct df_rr_h *p_rrh,
     struct df_rr_d *p_rrd,

@@ -5,17 +5,21 @@
  * ORG:          Section Hydrology, GFZ
  * E-MAIL:       guan@gfz-potsdam.de
  * ORIG-DATE:    Apr-2024
- * DESCRIPTION:  
- *               
- *               
- *               
+ * DESCRIPTION:  the method-of-fragments conditioned on :
+ *               - circulation patterns (classification)
+ *               - seasonality (summer or winter)
+ *               - the similarity is represented by SSIM (structural Similarity Index Measure)
+ *               - kNN is used to consider the uncertainty or variability 
  * DESCRIP-END.
- * FUNCTIONS:    
- *               
+ * FUNCTIONS:    kNN_MOF_SSIM(); Toggle_WD(); kNN_SSIM_sampling();
+ *               get_random(); weight_cdf_sample(); Fragment_assign();
  * 
  * COMMENTS:
  * 
- *  
+ * REFERENCEs:
+ * Xiaoxiang Guan, Katrin Nissen, Viet Dung Nguyen, Bruno Merz, Benjamin Winter, Sergiy Vorogushyn. 
+ *      Multisite temporal rainfall disaggregation using methods of fragments conditioned on circulation patterns. 
+ *      Journal of Hydrology, 621, 129640. doi: https://doi.org/10.1016/j.jhydrol.2023.129640
  */
 
 /*******************************************************************************
@@ -31,6 +35,8 @@
 #include <ctype.h>
 #include "def_struct.h"
 #include "Func_SSIM.h"
+#include "Func_Disaggregate.h"
+#include "Func_dataIO.h"
 
 void kNN_MOF_SSIM(
     struct df_rr_h *p_rrh,
@@ -171,17 +177,17 @@ int kNN_SSIM_sampling(
 
     // double distance[MAXrow]; 
     double *SSIM;  // the distance between target day and candidate days
-    SSIM = malloc(n_can * sizeof(double));
+    SSIM = (double *)malloc(n_can * sizeof(double));
     int size_pool; // the k in kNN
     int index_out; // the output of this function: the sampled fragment from candidates pool
     /** compute mean-SSIM between target and candidate images **/
-    for (i=0; i<n_can; i++){
+    for (i = 0; i < n_can; i++)
+    {
         *(SSIM + i) = -1;
         *(SSIM + i) = meanSSIM(
             p_rrd->p_rr,
             (p_rrh + pool_cans[i])->rr_d,
             p_gp->NODATA,
-            p_gp->L, // maximum value in the image
             p_gp->N_STATION,
             p_gp->k,
             p_gp->power);
@@ -209,7 +215,7 @@ int kNN_SSIM_sampling(
         printf("candidate index: %d, distance: %.2f\n", pool_cans[i], *(distance+i));
     }
     */
-    if (SSIM[0] == 1.0) {
+    if (SSIM[0] > 1.0) {
         // the closest candidate with the distance of 0.0, then we skip the weighted sampling.
         index_out = pool_cans[0];
     } else {
@@ -230,6 +236,9 @@ int kNN_SSIM_sampling(
         for (i=0; i<size_pool; i++){
             *(weights+i) = SSIM[i] + 1;
             w_sum += SSIM[i] + 1;
+            fprintf(p_SSIM, "%d-%02d-%02d,", p_rrd->date.y, p_rrd->date.m, p_rrd->date.d);
+            fprintf(p_SSIM, "%d,%d,%f,", i, pool_cans[i], SSIM[i]);
+            fprintf(p_SSIM, "%d-%02d-%02d\n", (p_rrh + pool_cans[i])->date.y, (p_rrh + pool_cans[i])->date.m, (p_rrh + pool_cans[i])->date.d);
         }
         for (i=0; i<size_pool; i++){
             *(weights+i) /= w_sum; // reassignment
