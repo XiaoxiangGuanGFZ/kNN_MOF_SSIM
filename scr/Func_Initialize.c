@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "def_struct.h"
 #include "Func_Initialize.h"
 
@@ -266,3 +267,108 @@ void initialize_L(
     p_gp->L = L + 1;
 }
 
+void view_class_rrd(
+    struct df_rr_d *p_rr_d,
+    int nrow_rr_d
+)
+{
+    int n_classes = 0;
+    for (size_t i = 0; i < nrow_rr_d; i++)
+    {
+        if ((p_rr_d + i)->class > n_classes)
+        {
+            n_classes = (p_rr_d + i)->class;
+        }
+    }
+    n_classes += 1;  // the total number of classes the time series is categorized into. 
+
+    int *counts;
+    counts = (int *)malloc(sizeof(int) * n_classes);
+    for (size_t i = 0; i < n_classes; i++)
+    {
+        // initialize 
+        *(counts + i) = 0;
+    }
+
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            if ((p_rr_d + i)->class == t)
+            {
+                *(counts + t) += 1;
+            }
+        }
+    }
+    
+    /**********************************
+     * print the counts of each class to screen
+     */
+    printf("* class-counts:\n   - class: "); fprintf(p_log, "* class-counts:\n   - class: ");
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        printf("%5d ", t + 1); fprintf(p_log, "%5d ", t + 1);
+    }
+    printf("\n"); fprintf(p_log, "\n");
+
+    printf("   - count: "); fprintf(p_log, "   - count: ");
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        printf("%5d ", *(counts + t)); fprintf(p_log, "%5d ", *(counts + t));
+    }
+    printf("\n"); fprintf(p_log, "\n");
+    
+}
+
+
+void view_class_rrh(
+    struct df_rr_h *p_rr_h,
+    int nrow_rr_d
+)
+{
+    int n_classes = 0;
+    for (size_t i = 0; i < nrow_rr_d; i++)
+    {
+        if ((p_rr_h + i)->class > n_classes)
+        {
+            n_classes = (p_rr_h + i)->class;
+        }
+    }
+    n_classes += 1;  // the total number of classes the time series is categorized into. 
+
+    int *counts;
+    counts = (int *)malloc(sizeof(int) * n_classes);
+    for (size_t i = 0; i < n_classes; i++)
+    {
+        // initialize 
+        *(counts + i) = 0;
+    }
+
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            if ((p_rr_h + i)->class == t)
+            {
+                *(counts + t) += 1;
+            }
+        }
+    }
+    
+    /**********************************
+     * print the counts of each class to screen
+     */
+    printf("* class-counts:\n   - class: "); fprintf(p_log, "* class-counts:\n   - class: ");
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        printf("%5d ", t + 1); fprintf(p_log, "%5d ", t + 1);
+    }
+    printf("\n"); fprintf(p_log, "\n");
+
+    printf("   - count: "); fprintf(p_log, "   - count: ");
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        printf("%5d ", *(counts + t)); fprintf(p_log, "%5d ", *(counts + t));
+    }
+    printf("\n"); fprintf(p_log, "\n");
+}
