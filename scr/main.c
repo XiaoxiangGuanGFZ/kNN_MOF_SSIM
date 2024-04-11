@@ -25,6 +25,8 @@
  *  
 */
 
+FILE *p_SSIM;
+FILE *p_log;  // file pointer pointing to log file
 
 /***************************************
  * main function 
@@ -49,7 +51,7 @@ int main(int argc, char * argv[]) {
     argv[1]: pointing to the second string (parameter): file path and name of global parameter file.
     */
     import_global(*(++argv), p_gp);
-    FILE *p_log;  // file pointer pointing to log file
+    
     if ((p_log=fopen(p_gp->FP_LOG, "a+")) == NULL) {
         printf("cannot create / open log file\n");
         exit(1);
@@ -78,9 +80,13 @@ int main(int argc, char * argv[]) {
         printf("SUMMER: %d-%d\n", p_gp->SUMMER_FROM, p_gp->SUMMER_TO);
         fprintf(p_log,"SUMMER: %d-%d\n", p_gp->SUMMER_FROM, p_gp->SUMMER_TO);
     }
-    printf("SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\n", p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2]);
-    fprintf(p_log, "SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\n", p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2]);
-    
+    printf("SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\nNODATA: %f\n",
+           p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2],
+           p_gp->NODATA);
+    fprintf(p_log, "SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\nNODATA: %f\n",
+            p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2],
+            p_gp->NODATA);
+
     /******* import circulation pattern series *********/
     
     static struct df_cp df_cps[MAXrow];
@@ -123,6 +129,7 @@ int main(int argc, char * argv[]) {
         df_cps,
         nrow_rr_d,
         nrow_cp);
+    
     time(&tm);
     printf("------ Import daily rr data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rr data (Done): %s", ctime(&tm));
     
@@ -140,7 +147,9 @@ int main(int argc, char * argv[]) {
         "* the last day:  %d-%02d-%02d\n", 
         df_rr_daily[nrow_rr_d-1].date.y,df_rr_daily[nrow_rr_d-1].date.m,df_rr_daily[nrow_rr_d-1].date.d
     );
-    
+
+    view_class_rrd(df_rr_daily, nrow_rr_d);
+
     /****** import hourly rainfall data (obs as fragments) *******/
     
     int ndays_h;
@@ -150,7 +159,7 @@ int main(int argc, char * argv[]) {
         p_gp,
         df_rr_hourly,
         df_cps,
-        nrow_rr_d,
+        ndays_h,
         nrow_cp);
     
     time(&tm);
@@ -170,10 +179,16 @@ int main(int argc, char * argv[]) {
         "* the last day:  %d-%02d-%02d\n", 
         df_rr_hourly[ndays_h-1].date.y, df_rr_hourly[ndays_h-1].date.m, df_rr_hourly[ndays_h-1].date.d
     );
-
+    view_class_rrh(df_rr_hourly, ndays_h);
     /****** maxima of rainfall value (L value in SSIM algorithm) *******/
     initialize_L(df_rr_hourly, df_rr_daily, p_gp, nrow_rr_d, ndays_h);
     /****** Disaggregation: kNN_MOF_cp *******/
+    
+    if ((p_SSIM=fopen("D:/kNN_MOF_SSIM/output/SSIM.csv", "w")) == NULL) {
+        printf("cannot create / open SSIM file\n");
+        exit(1);
+    }
+    fprintf(p_SSIM, "target,ID,index_Frag,SSIM,candidate\n");
     printf("------ Disaggregating: ... \n");
     kNN_MOF_SSIM(
         df_rr_hourly,
@@ -184,6 +199,7 @@ int main(int argc, char * argv[]) {
         ndays_h,
         nrow_cp
     );
+    fclose(p_SSIM);
     time(&tm);
     printf("------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
     fprintf(p_log, "------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
