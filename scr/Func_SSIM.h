@@ -5,7 +5,6 @@ double meanSSIM(
     double *image1,
     double *image2,
     double NODATA,
-    double L,
     int size,
     double *k,
     double *power
@@ -36,6 +35,13 @@ double covariance(
 int isNODATA(
     double x,
     double NODATA
+);
+
+double SSIM_L(
+    double *image1,
+    double *image2,
+    double NODATA,
+    int size
 );
 
 #endif
