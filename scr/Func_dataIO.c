@@ -125,6 +125,8 @@ void import_global(
                     // sscanf(token2, "%f,%f,%f", p_gp->power + 0, p_gp->power + 1, p_gp->power + 2);
                 } else if (strncmp(token, "NODATA", 6) == 0) {
                     p_gp->NODATA = atof(token2);
+                } else if (strncmp(token, "RUN", 3) == 0) {
+                    p_gp->RUN = atof(token2);
                 } else {
                     printf(
                         "Error in opening global parameter file: unrecognized parameter field!"
@@ -303,7 +305,8 @@ int import_df_cp(
 void Write_df_rr_h(
     struct df_rr_h *p_out,
     struct Para_global *p_gp,
-    FILE *p_FP_OUT
+    FILE *p_FP_OUT,
+    int run
 ){
     /**************
      * Description:
@@ -317,7 +320,7 @@ void Write_df_rr_h(
     for (h=0;h<24;h++) {
         fprintf(
             p_FP_OUT,
-            "%d,%d,%d,%d,%.2f", 
+            "%d,%d,%d,%d,%d,%.2f", run,
             p_out->date.y, p_out->date.m, p_out->date.d, h, 
             p_out->rr_h[0][h]
         ); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)

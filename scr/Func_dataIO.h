@@ -27,7 +27,8 @@ int import_df_cp(
 void Write_df_rr_h(
     struct df_rr_h *p_out,
     struct Para_global *p_gp,
-    FILE *p_FP_OUT
+    FILE *p_FP_OUT,
+    int run
 );
 
 #endif
