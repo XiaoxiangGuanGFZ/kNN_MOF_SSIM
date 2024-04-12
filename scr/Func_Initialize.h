@@ -30,13 +30,13 @@ int CP_classes(
     int nrow_cp
 );
 
-void initialize_L(
-    struct df_rr_h *p_rrh,
-    struct df_rr_d *p_rrd,
-    struct Para_global *p_gp,
-    int nrow_rr_d,
-    int ndays_h
-);
+// void initialize_L(
+//     struct df_rr_h *p_rrh,
+//     struct df_rr_d *p_rrd,
+//     struct Para_global *p_gp,
+//     int nrow_rr_d,
+//     int ndays_h
+// );
 
 void view_class_rrd(
     struct df_rr_d *p_rr_d,

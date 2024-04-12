@@ -181,7 +181,7 @@ int main(int argc, char * argv[]) {
     );
     view_class_rrh(df_rr_hourly, ndays_h);
     /****** maxima of rainfall value (L value in SSIM algorithm) *******/
-    initialize_L(df_rr_hourly, df_rr_daily, p_gp, nrow_rr_d, ndays_h);
+    // initialize_L(df_rr_hourly, df_rr_daily, p_gp, nrow_rr_d, ndays_h);
     /****** Disaggregation: kNN_MOF_cp *******/
     
     if ((p_SSIM=fopen("D:/kNN_MOF_SSIM/output/SSIM.csv", "w")) == NULL) {

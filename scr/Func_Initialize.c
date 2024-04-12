@@ -231,41 +231,40 @@ int CP_classes(
     return cp_max;
 }
 
-void initialize_L(
-    struct df_rr_h *p_rrh,
-    struct df_rr_d *p_rrd,
-    struct Para_global *p_gp,
-    int nrow_rr_d,
-    int ndays_h
-)
-{
-    double L = 0.0;
-    double rr_temp;
-    for (size_t i = 0; i < nrow_rr_d; i++)
-    {
-        for (size_t j = 0; j < p_gp->N_STATION; j++)
-        {
-            rr_temp = (p_rrd + i)->p_rr[j];
-            if (rr_temp > L)
-            {
-                L = rr_temp;
-            }
-        }
-    }
-    
-    for (size_t i = 0; i < ndays_h; i++)
-    {
-        for (size_t j = 0; j < p_gp->N_STATION; j++)
-        {
-            rr_temp = (p_rrh + i)->rr_d[j];
-            if (rr_temp > L)
-            {
-                L = rr_temp;
-            }
-        }
-    }
-    p_gp->L = L + 1;
-}
+// void initialize_L(
+//     struct df_rr_h *p_rrh,
+//     struct df_rr_d *p_rrd,
+//     struct Para_global *p_gp,
+//     int nrow_rr_d,
+//     int ndays_h)
+// {
+//     double L = 0.0;
+//     double rr_temp;
+//     for (size_t i = 0; i < nrow_rr_d; i++)
+//     {
+//         for (size_t j = 0; j < p_gp->N_STATION; j++)
+//         {
+//             rr_temp = (p_rrd + i)->p_rr[j];
+//             if (rr_temp > L)
+//             {
+//                 L = rr_temp;
+//             }
+//         }
+//     }
+
+//     for (size_t i = 0; i < ndays_h; i++)
+//     {
+//         for (size_t j = 0; j < p_gp->N_STATION; j++)
+//         {
+//             rr_temp = (p_rrh + i)->rr_d[j];
+//             if (rr_temp > L)
+//             {
+//                 L = rr_temp;
+//             }
+//         }
+//     }
+//     p_gp->L = L + 1;
+// }
 
 void view_class_rrd(
     struct df_rr_d *p_rr_d,
