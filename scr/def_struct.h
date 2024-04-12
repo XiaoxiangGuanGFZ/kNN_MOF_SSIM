@@ -64,15 +64,16 @@ struct Para_global
         int N_STATION;          // number of stations (rain sites)
         char T_CP[10];          // toggle (flag), whether the CP is considered in the algorithm
         char SEASON[10];        // toggle (flag), whether the seasonality is considered in the algorithm
-        int SUMMER_FROM;
-        int SUMMER_TO;
+        int SUMMER_FROM;        // the beginning month of summer
+        int SUMMER_TO;          // the end month of summer
         int CONTINUITY;         // continuity day
         int WD;                 // the flexibility level of wet-dry status in candidates filtering
-        int CLASS_N;
-        double L;
-        double k[3];
-        double power[3];
-        double NODATA;
+        int CLASS_N;            // total categories the series is classified into
+
+        double k[3];            // 3 parameters in SSIM
+        double power[3];        // 3 paras in SSIM
+        double NODATA;          // nodata value
+        int RUN;                // simulation runs 
     };
 
 
