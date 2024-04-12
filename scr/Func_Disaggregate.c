@@ -98,6 +98,11 @@ void kNN_MOF_SSIM(
                     df_rr_h_out.rr_h[j][h] = 0.0;
                 }
             }
+            for (size_t t = 0; t < p_gp->RUN; t++)
+            {
+                /* write the disaggregation output */
+                Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t+1);
+            }
         } else {
             // Toggle_wd == 1;
             // this is a rainy day; we will disaggregate it.
@@ -112,12 +117,19 @@ void kNN_MOF_SSIM(
                     n_can += 1;
                 }
             }
-            fragment = kNN_SSIM_sampling(p_rrd + i, p_rrh, p_gp, pool_cans, n_can);
+            int *index_fragment;
+            index_fragment = (int *)malloc(sizeof(int) * p_gp->RUN);
+            kNN_SSIM_sampling(p_rrd + i, p_rrh, p_gp, pool_cans, n_can, index_fragment);
             /*assign the sampled fragments to target day (disaggregation)*/
-            Fragment_assign(p_rrh, &df_rr_h_out, p_gp, fragment);
+            for (size_t t = 0; t < p_gp->RUN; t++)
+            {
+                Fragment_assign(p_rrh, &df_rr_h_out, p_gp, index_fragment[t]);
+                /* write the disaggregation output */
+                Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t+1);
+            }
         }
-        /* write the disaggregation output */
-        Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT);
+        
+        
         printf("%d-%02d-%02d: Done!\n", (p_rrd+i)->date.y, (p_rrd+i)->date.m, (p_rrd+i)->date.d);
         
         free(df_rr_h_out.rr_h);  // free the memory allocated for disaggregated hourly output
@@ -147,12 +159,13 @@ int Toggle_WD(
 
 
 
-int kNN_SSIM_sampling(
+void kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
     struct Para_global *p_gp,
     int pool_cans[],
-    int n_can
+    int n_can,
+    int *index_fragment
 ){
     /**************
      * Description:
@@ -215,54 +228,55 @@ int kNN_SSIM_sampling(
         printf("candidate index: %d, distance: %.2f\n", pool_cans[i], *(distance+i));
     }
     */
-    if (SSIM[0] > 1.0) {
-        // the closest candidate with the distance of 0.0, then we skip the weighted sampling.
-        index_out = pool_cans[0];
-    } else {
+    // if (SSIM[0] > 1.0) {
+    //     // the closest candidate with the distance of 0.0, then we skip the weighted sampling.
+    //     index_out = pool_cans[0];
+    // } else {
         /***
          * the size of candidate pool in kNN algorithm
          *      the range of size_pool:
          *      [2, n_can]
         */
-        size_pool = (int)sqrt(n_can) + 1; 
-        /***
-         * compute the weights for kNN sampling
-         *      the weight is defined based on SSIM; higher SSIM, heavier weight
-         * dynamic memory allocation for the double array - weights
-         * */
-        double *weights;
-        weights = malloc(size_pool * sizeof(double)); // a double array with the size of size_pool
-        double w_sum = 0.0; 
-        for (i=0; i<size_pool; i++){
-            *(weights+i) = SSIM[i] + 1;
-            w_sum += SSIM[i] + 1;
-            fprintf(p_SSIM, "%d-%02d-%02d,", p_rrd->date.y, p_rrd->date.m, p_rrd->date.d);
-            fprintf(p_SSIM, "%d,%d,%f,", i, pool_cans[i], SSIM[i]);
-            fprintf(p_SSIM, "%d-%02d-%02d\n", (p_rrh + pool_cans[i])->date.y, (p_rrh + pool_cans[i])->date.m, (p_rrh + pool_cans[i])->date.d);
-        }
-        for (i=0; i<size_pool; i++){
-            *(weights+i) /= w_sum; // reassignment
-        }
-        /* compute the empirical cdf for weights (vector) */
-        double *weights_cdf;
-        weights_cdf = malloc(size_pool * sizeof(double));
-        *(weights_cdf + 0) = weights[0];  // initialization
-        for (i=1; i<size_pool; i++){
-            *(weights_cdf + i) = *(weights_cdf + i-1) + weights[i];
-        }
-        /* generate a random number, then select the fragments index*/
-        index_out = weight_cdf_sample(size_pool, pool_cans, weights_cdf);
-        // for (j = 0; j < p_gp->N_STATION; j++)
-        // {
-        //     if (p_rrd->p_rr[j] > 0.0 && (p_rrh + index_out)->rr_d[j] <= 0.0)
-        //     {
-        //     }
-        // }
-        free(weights);
-        free(weights_cdf);
+    size_pool = (int)sqrt(n_can) + 1;
+    /***
+     * compute the weights for kNN sampling
+     *      the weight is defined based on SSIM; higher SSIM, heavier weight
+     * dynamic memory allocation for the double array - weights
+     * */
+    double *weights;
+    weights = malloc(size_pool * sizeof(double)); // a double array with the size of size_pool
+    double w_sum = 0.0;
+    for (i = 0; i < size_pool; i++)
+    {
+        *(weights + i) = SSIM[i] + 1;
+        w_sum += SSIM[i] + 1;
+        fprintf(p_SSIM, "%d-%02d-%02d,", p_rrd->date.y, p_rrd->date.m, p_rrd->date.d);
+        fprintf(p_SSIM, "%d,%d,%f,", i, pool_cans[i], SSIM[i]);
+        fprintf(p_SSIM, "%d-%02d-%02d\n", (p_rrh + pool_cans[i])->date.y, (p_rrh + pool_cans[i])->date.m, (p_rrh + pool_cans[i])->date.d);
     }
+    for (i = 0; i < size_pool; i++)
+    {
+        *(weights + i) /= w_sum; // reassignment
+    }
+    /* compute the empirical cdf for weights (vector) */
+    double *weights_cdf;
+    weights_cdf = malloc(size_pool * sizeof(double));
+    *(weights_cdf + 0) = weights[0]; // initialization
+    for (i = 1; i < size_pool; i++)
+    {
+        *(weights_cdf + i) = *(weights_cdf + i - 1) + weights[i];
+    }
+    /* generate a random number, then select the fragments index*/
+    for (size_t t = 0; t < p_gp->RUN; t++)
+    {
+        index_fragment[t] = weight_cdf_sample(size_pool, pool_cans, weights_cdf);
+    }
+
+    free(weights);
+    free(weights_cdf);
+    // }
     free(SSIM);
-    return index_out;
+    // return index_out;
 }
 
 

@@ -19,12 +19,13 @@ int Toggle_WD(
     double *p_rr_d
 );
 
-int kNN_SSIM_sampling(
+void kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
     struct Para_global *p_gp,
     int pool_cans[],
-    int n_can
+    int n_can,
+    int *index_fragment
 );
 
 double get_random();
