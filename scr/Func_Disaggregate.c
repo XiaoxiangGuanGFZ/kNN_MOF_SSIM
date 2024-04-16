@@ -43,6 +43,7 @@ void kNN_MOF_SSIM(
     struct df_rr_d *p_rrd,
     struct df_cp *p_cp,
     struct Para_global *p_gp,
+    struct df_coor *p_coor,
     int nrow_rr_d,
     int ndays_h,
     int nrow_cp
@@ -123,15 +124,13 @@ void kNN_MOF_SSIM(
             /*assign the sampled fragments to target day (disaggregation)*/
             for (size_t t = 0; t < p_gp->RUN; t++)
             {
-                Fragment_assign(p_rrh, &df_rr_h_out, p_gp, index_fragment[t]);
+                Fragment_assign(p_rrh, &df_rr_h_out, p_gp, p_coor, index_fragment[t]);
                 /* write the disaggregation output */
                 Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t+1);
             }
         }
         
-        
         printf("%d-%02d-%02d: Done!\n", (p_rrd+i)->date.y, (p_rrd+i)->date.m, (p_rrd+i)->date.d);
-        
         free(df_rr_h_out.rr_h);  // free the memory allocated for disaggregated hourly output
     }
     fclose(p_FP_OUT);
@@ -156,7 +155,6 @@ int Toggle_WD(
     }
     return WD;
 }
-
 
 
 void kNN_SSIM_sampling(
@@ -314,6 +312,7 @@ void Fragment_assign(
     struct df_rr_h *p_rrh,
     struct df_rr_h *p_out,
     struct Para_global *p_gp,
+    struct df_coor *p_coor,
     int fragment
 ){
     /**********
@@ -334,9 +333,38 @@ void Fragment_assign(
         {
             if ((p_rrh + fragment)->rr_d[j] <= 0.0)
             {
+                /********
+                 * the rain site in the target day is wet while in candidate day it is dry, 
+                 * then no direct fragments can be borrowed to disaggregate. 
+                 * **/
+
+                // for (h = 0; h < 24; h++)
+                // {
+                //     // just distribute evenly
+                //     p_out->rr_h[j][h] = p_out->rr_d[j] * 1 / 24;
+                // }
+
+                /*********
+                 * borrow fragments from nearest rainy (wet) neighbour
+                 */
+                int id; 
+                int index = 0;
+                int wd = 0;
+                while (wd == 0 && index < p_gp->N_STATION - 1)
+                {
+                    // p_gp->N_STATION - 1: number of neighbours
+                    id = *((p_coor + j)->neighbors + index);
+                    if((p_rrh + fragment)->rr_d[id] > 0.0)
+                    {
+                        // the neighbour is wet
+                        wd = 1;
+                    } else {
+                        index += 1;
+                    }
+                }
                 for (h = 0; h < 24; h++)
                 {
-                    p_out->rr_h[j][h] = p_out->rr_d[j] * 1 / 24;
+                    p_out->rr_h[j][h] = p_out->rr_d[j] * (p_rrh + fragment)->rr_h[id][h] / (p_rrh + fragment)->rr_d[id];
                 }
             }
             else
@@ -357,4 +385,5 @@ void Fragment_assign(
         }
     }
 }
+
 

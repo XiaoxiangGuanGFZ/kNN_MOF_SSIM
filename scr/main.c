@@ -114,6 +114,23 @@ int main(int argc, char * argv[]) {
         printf("------ Disaggregation conditioned only on seasonality (12 months): %s", ctime(&tm));
         fprintf(p_log, "------ Disaggregation conditioned only on seasonality (12 months): %s", ctime(&tm));
     }
+
+    /****** import rainsite coor *******/
+    struct df_coor *p_coor;
+    int nrow_coor;
+    p_coor = (struct df_coor *)malloc(sizeof(struct df_coor) * p_gp->N_STATION * 2);
+    nrow_coor = import_df_coor(p_gp->FP_COOR, p_coor);
+    initialize_df_coor(p_gp, &p_coor, nrow_coor);
+    time(&tm); printf("------ Import rainsite coor (Done): %s\n", ctime(&tm)); 
+    fprintf(p_log, "------ Import rainsite coor (Done): %s\n", ctime(&tm));
+
+    // printf("neighbors for site: %d\n", 9);
+    // for (size_t i = 0; i < nrow_coor - 1; i++)
+    // {
+    //     printf("rank: %03d  id: %03d\n", i, *((p_coor + 9)->neighbors + i));
+    // }
+    // exit(0);
+
     /****** import daily rainfall data (to be disaggregated) *******/
     
     static struct df_rr_d df_rr_daily[MAXrow];
@@ -195,6 +212,7 @@ int main(int argc, char * argv[]) {
         df_rr_daily,
         df_cps,
         p_gp,  // the pointer pointing to Para_df structure;
+        p_coor,
         nrow_rr_d,
         ndays_h,
         nrow_cp

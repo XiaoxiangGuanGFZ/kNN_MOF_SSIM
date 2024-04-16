@@ -48,5 +48,17 @@ void view_class_rrh(
     int nrow_rr_d
 );
 
+void initialize_df_coor(
+    struct Para_global *p_gp,
+    struct df_coor **p_coor,
+    int nrow_coor
+);
+
+double COOR_distance(
+    double lon1,
+    double lat1,
+    double lon2,
+    double lat2
+);
 
 #endif

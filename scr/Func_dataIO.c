@@ -90,6 +90,8 @@ void import_global(
                     strcpy(p_gp->FP_DAILY, token2);
                 } else if (strncmp(token, "FP_CP", 5) == 0) {
                     strcpy(p_gp->FP_CP, token2);
+                } else if (strncmp(token, "FP_COOR", 7) == 0) {
+                    strcpy(p_gp->FP_COOR, token2);
                 } else if (strncmp(token, "FP_HOURLY", 9) == 0) {
                     strcpy(p_gp->FP_HOURLY, token2);
                 } else if (strncmp(token, "SEASON", 6) == 0) {
@@ -200,6 +202,36 @@ int import_dfrr_d(
     fclose(fp_d);
     return i;
 }
+
+int import_df_coor(
+    char fname[],
+    struct df_coor *p_df_coor
+)
+{
+    /*************************************
+     * read the geographic positions of rain sites: 
+     * coordinates: longitude and latitude
+    */
+    FILE *fp;
+    if ((fp=fopen(fname, "r")) == NULL) {
+        printf("Cannot open daily rr data file: %s\n", fname);
+        exit(1);
+    }
+    int i, j;
+    i = 0;  // record the number of rows in the data file
+    char *token;
+    char row[MAXCHAR];
+    while (fgets(row, MAXCHAR, fp) != NULL)
+    {
+        (p_df_coor + i)->id = atoi(strtok(row, ",")); 
+        (p_df_coor + i)->lon = atof(strtok(NULL, ","));
+        (p_df_coor + i)->lat = atof(strtok(NULL, ","));
+        i++;
+    }
+    fclose(fp);
+    return i;
+}
+
 
 int import_dfrr_h(
     char FP_hourly[], 

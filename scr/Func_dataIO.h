@@ -13,6 +13,11 @@ int import_dfrr_d(
     struct df_rr_d *p_rr_d
 ) ;
 
+int import_df_coor(
+    char fname[],
+    struct df_coor *p_df_coor
+);
+
 int import_dfrr_h(
     char FP_hourly[], 
     int N_STATION,

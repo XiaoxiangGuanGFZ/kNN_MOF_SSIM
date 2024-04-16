@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "def_struct.h"
 #include "Func_Initialize.h"
 
@@ -370,4 +371,89 @@ void view_class_rrh(
         printf("%5d ", *(counts + t)); fprintf(p_log, "%5d ", *(counts + t));
     }
     printf("\n"); fprintf(p_log, "\n");
+}
+
+void initialize_df_coor(
+    struct Para_global *p_gp,
+    struct df_coor **p_coor,
+    int nrow_coor
+)
+{
+    if (nrow_coor != p_gp->N_STATION)
+    {
+        printf("FP_COOR: rainsite number contradiction between FP_COOR and data files!\n");
+        exit(1);
+    } else {
+        double *distance; double d_temp;
+        int *id; int id_temp;
+        int n_neighbors;
+        n_neighbors = nrow_coor - 1;  // number of neighbouring rain site in total
+        distance = (double *)malloc(sizeof(double) * n_neighbors);
+        id = (int *)malloc(sizeof(int) * n_neighbors);
+
+        /**************
+         * iterate each rain site, obtain a rank vector of
+         * distance with all the neighbours (in increasing order)
+         */
+        for (size_t i = 0; i < nrow_coor; i++)
+        {
+            (*p_coor + i)->neighbors = (int *)malloc(sizeof(int) * n_neighbors);
+
+            /*****
+             * calculate the distance between target rain site with its neighbours
+             * every rain site has n-1 neighbours (excluding itself)
+             */
+            int t = 0;
+            for (size_t j = 0; j < nrow_coor; j++)
+            {
+                if (i != j)
+                {
+                    *(distance + t) = COOR_distance(
+                        (*p_coor + i)->lon, (*p_coor + i)->lat, 
+                        (*p_coor + j)->lon, (*p_coor + j)->lat
+                    );
+                    *(id + t) = j;
+                    t += 1;
+                }                
+            }
+
+            // sorting the distance vector in the increasing order
+            for (size_t j = 0; j < n_neighbors - 1; j++)
+            {
+                for (size_t k = j + 1; k < n_neighbors; k++)
+                {
+                    if (*(distance + j) > *(distance + k))
+                    {
+                        d_temp = *(distance + j);
+                        *(distance + j) = *(distance + k);
+                        *(distance + k) = d_temp;
+                        id_temp = *(id + j);
+                        *(id + j) = *(id + k);
+                        *(id + k) = id_temp;
+                    }
+                }
+            }
+
+            // assign the rank to the structure
+            for (size_t j = 0; j < n_neighbors; j++)
+            {
+                *((*p_coor + i)->neighbors + j) = *(id + j);
+            }
+        }
+        free(id);
+        free(distance);
+    }
+    
+}
+
+double COOR_distance(
+    double lon1,
+    double lat1,
+    double lon2,
+    double lat2
+)
+{
+    double d;
+    d = pow((lon1 - lon2), 2) + pow(lat1 - lat2, 2);
+    return d;
 }
