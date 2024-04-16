@@ -24,8 +24,10 @@ void kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
     struct Para_global *p_gp,
+    int index_target,
     int pool_cans[],
     int n_can,
+    int skip,
     int *index_fragment
 );
 

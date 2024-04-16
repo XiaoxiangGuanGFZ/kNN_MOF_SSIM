@@ -57,15 +57,16 @@ void kNN_MOF_SSIM(
      *  ndays_h: the number of observations of hourly rr data
      *  nrow_cp: the number of rows in cp series
      * *****************/
-    int i, j, h, k, Toggle_wd;
-    int toggle_cp;
+    int i, j, h, k, s, Toggle_wd;
     int class_t, class_c;
-    int skip=0;
+    
     struct df_rr_h df_rr_h_out; // this is a struct variable, not a struct array;
     // struct df_rr_h df_rr_h_candidates[100];
     // p_gp->CONTINUITY: 1, skip = 0;
     // p_gp->CONTINUITY: 3, skip = 1;
-    skip = (p_gp->CONTINUITY - 1) / 2;
+    // p_gp->CONTINUITY: 5, skip = 2;
+    int skip = 0;
+    skip = (int)((p_gp->CONTINUITY - 1) / 2);
     int pool_cans[MAXrow];  // the index of the candidates (a pool); the size is sufficient 
     int n_can; //the number of candidates after all conditioning (cp and seasonality)
     int fragment; // the index of df_rr_h structure with the final chosed fragments
@@ -75,19 +76,20 @@ void kNN_MOF_SSIM(
         printf("Program terminated: cannot create or open output file\n");
         exit(1);
     }
-    for (i=skip; i < nrow_rr_d-skip; i++) { //i=skip
+    for (i=0; i < nrow_rr_d; i++) { //i=skip; for (i=skip; i < nrow_rr_d-skip; i++) { //i=skip
         // iterate each (possible) target day
         df_rr_h_out.date = (p_rrd + i)->date;
         df_rr_h_out.rr_d = (p_rrd + i)->p_rr; // is this valid?; address transfer
         df_rr_h_out.rr_h = calloc(p_gp->N_STATION, sizeof(double) * 24);  // allocate memory (stack);
         Toggle_wd = 0;  // initialize with 0 (non-rainy)
-        for (j=0; j < p_gp->N_STATION; j++) {
-            if (*((p_rrd + i)->p_rr + j) > 0.0) {
-                // any gauge with rr > 0.0
-                Toggle_wd = 1;
-                break;
-            }
-        }
+        Toggle_wd = Toggle_WD(p_gp->N_STATION, (p_rrd + i)->p_rr);
+        // for (j=0; j < p_gp->N_STATION; j++) {
+        //     if (*((p_rrd + i)->p_rr + j) > 0.0) {
+        //         // any gauge with rr > 0.0
+        //         Toggle_wd = 1;
+        //         break;
+        //     }
+        // }
         // printf("Targetday: %d-%d-%d: %d\n", 
         //     (p_rrd + i)->date.y, (p_rrd + i)->date.m, (p_rrd + i)->date.d, Toggle_wd
         // );
@@ -112,15 +114,49 @@ void kNN_MOF_SSIM(
             for (j = 0; j < ndays_h; j++)
             {
                 class_c = (p_rrh + j)->class; // the class of the candidate day
-                if (class_c == class_t && Toggle_WD(p_gp->N_STATION, (p_rrh + j)->rr_d) == 1)
+                if (class_c == class_t && Toggle_WD(p_gp->N_STATION, (p_rrh + j)->rr_d) == 1 && j >= skip && j < ndays_h - skip)
                 {
-                    pool_cans[n_can] = j;
-                    n_can += 1;
+                    /*********
+                     * criteria:
+                     * - class: cp type and seasonality
+                     * - wet-dry status
+                     * - the days before and after the target day exist, if CONTUNITY > 1
+                     * ****/
+                    int test = 1;
+                    if (skip > 0 && i >= skip && i < nrow_rr_d-skip)
+                    {
+                        for (s = 0-skip; s < 1+skip; s++)
+                        {
+                            if (
+                                Toggle_WD(p_gp->N_STATION, (p_rrh + j + s)->rr_d) != Toggle_WD(p_gp->N_STATION, (p_rrd + i + s)->p_rr)
+                            )
+                            {
+                                test = 0;
+                                break;
+                            }
+                        }
+                    }
+                    if (test == 1)
+                    {
+                        pool_cans[n_can] = j;
+                        n_can += 1;
+                    }
                 }
             }
+            if (n_can == 0)
+            {
+                printf("No candidates!\n");
+                exit(1);
+            }
+            
             int *index_fragment;
             index_fragment = (int *)malloc(sizeof(int) * p_gp->RUN);
-            kNN_SSIM_sampling(p_rrd + i, p_rrh, p_gp, pool_cans, n_can, index_fragment);
+            if (i >= skip && i < nrow_rr_d-skip)
+            {
+                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, n_can, skip, index_fragment);
+            } else {
+                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, n_can, 0, index_fragment);
+            }
             /*assign the sampled fragments to target day (disaggregation)*/
             for (size_t t = 0; t < p_gp->RUN; t++)
             {
@@ -161,8 +197,10 @@ void kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
     struct Para_global *p_gp,
+    int index_target,
     int pool_cans[],
     int n_can,
+    int skip,
     int *index_fragment
 ){
     /**************
@@ -173,35 +211,73 @@ void kNN_SSIM_sampling(
      *      - weights defined based on SSIM: higher SSIM, heavier weight
      *      - sample one candidate 
      * Parameters:
-     *      p_rrd: the target day (structure pointer)
+     *      p_rrd: the daily rainfall st (structure pointer)
      *      p_rrh: pointing to the hourly rr obs structure array
      *      p_gp: pointing to global parameter structure
+     *      index_target: the index of target day to be disaggregated
      *      pool_cans: the index pool of candidats
      *      n_can: the number (or size) fo candidates pool
+     *      skip: due to the consideration of days before and after the target day, 
+     *              the first and last several days should be disaggregated by assuming CONTUNITY == 1
      * Output:
-     *      return a sampled index (fragments source)
+     *      return a vector (number) of sampled index (fragments source); how many RUNs of sampling
      * ***********/
-    int i, j;  // iteration variable
+    double w_image[5] = {0.08333333, 0.1666667, 0.5, 0.1666667, 0.08333333};  // CONTUNITY == 5
+    if (skip == 0)
+    {
+        // CONTUNITY == 1
+        w_image[0] = 1.0;
+    } else if (skip == 1)
+    {
+        // CONTUNITY == 3
+        w_image[0] = 0.1666667; w_image[1] = 0.6666667; w_image[2] = 0.1666667;
+    } else if (skip > 5)
+    {
+        printf("Currently CONTUNITY > 5 is not possible!\n");
+        exit(1);
+    }
+    // printf("skip: %d: w0:%f,w1:%f,w2:%f\n", skip, w_image[0], w_image[1],w_image[2]);
+    int i, j, s;  // iteration variable
     int temp_c;  // temporary variable during sorting 
     double temp_d;
     double rd = 0.0;  // a random decimal value between 0.0 and 1.0
 
     // double distance[MAXrow]; 
     double *SSIM;  // the distance between target day and candidate days
+    double SSIM_temp;
     SSIM = (double *)malloc(n_can * sizeof(double));
     int size_pool; // the k in kNN
-    int index_out; // the output of this function: the sampled fragment from candidates pool
+    // int index_out; // the output of this function: the sampled fragment from candidates pool
     /** compute mean-SSIM between target and candidate images **/
     for (i = 0; i < n_can; i++)
     {
-        *(SSIM + i) = -1;
-        *(SSIM + i) = meanSSIM(
-            p_rrd->p_rr,
-            (p_rrh + pool_cans[i])->rr_d,
-            p_gp->NODATA,
-            p_gp->N_STATION,
-            p_gp->k,
-            p_gp->power);
+        *(SSIM + i) = 0.0;
+        for (s = 0-skip; s < 1+skip; s++)
+        {
+            if (Toggle_WD(p_gp->N_STATION, (p_rrd + index_target + s)->p_rr) == 0)
+            {
+                SSIM_temp = w_image[s + skip] * 1.0;
+            } else {
+                SSIM_temp = w_image[s + skip] * meanSSIM(
+                                                   (p_rrd + index_target + s)->p_rr,
+                                                   (p_rrh + pool_cans[i] + s)->rr_d,
+                                                   p_gp->NODATA,
+                                                   p_gp->N_STATION,
+                                                   p_gp->k,
+                                                   p_gp->power);
+            }
+            // printf("SSIM_temp:%f",SSIM_temp);
+            *(SSIM + i) += SSIM_temp;
+            // printf("SSIM:%f\n",SSIM);
+        }
+        
+        // *(SSIM + i) = meanSSIM(
+        //     p_rrd->p_rr,
+        //     (p_rrh + pool_cans[i])->rr_d,
+        //     p_gp->NODATA,
+        //     p_gp->N_STATION,
+        //     p_gp->k,
+        //     p_gp->power);
         // printf("candidate index: %d, distance: %.2f\n", pool_cans[i], *(distance+i));
     }
     // sort the SSIM in the decreasing order
@@ -248,7 +324,7 @@ void kNN_SSIM_sampling(
     {
         *(weights + i) = SSIM[i] + 1;
         w_sum += SSIM[i] + 1;
-        fprintf(p_SSIM, "%d-%02d-%02d,", p_rrd->date.y, p_rrd->date.m, p_rrd->date.d);
+        fprintf(p_SSIM, "%d-%02d-%02d,", (p_rrd+index_target)->date.y, (p_rrd+index_target)->date.m, (p_rrd+index_target)->date.d);
         fprintf(p_SSIM, "%d,%d,%f,", i, pool_cans[i], SSIM[i]);
         fprintf(p_SSIM, "%d-%02d-%02d\n", (p_rrh + pool_cans[i])->date.y, (p_rrh + pool_cans[i])->date.m, (p_rrh + pool_cans[i])->date.d);
     }
