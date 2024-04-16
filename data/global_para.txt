@@ -4,6 +4,9 @@
 #-------------------
 
 # ------- disaggregation setup ---------
+# the file path and name of rain site coordinates 
+FP_COOR,D:/kNN_MOF_SSIM/data/Rainsite_COOR.csv
+
 # the file path and name of daily rr data to be disaggregated
 FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily.csv
 
