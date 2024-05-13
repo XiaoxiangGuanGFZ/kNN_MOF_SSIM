@@ -6,12 +6,9 @@
 #include "def_struct.h"
 #include "Func_Fragments.h"
 
-
-
 int Toggle_WD(
     int N_STATION,
-    double *p_rr_d
-)
+    double *p_rr_d)
 {
     /***********
      * rainy day (wet, WD == 1) or non rainy day (dry, WD == 0)
@@ -33,8 +30,7 @@ int Toggle_CONTINUITY(
     struct df_rr_d *p_rrd,
     struct Para_global *p_gp,
     int ndays_h,
-    int pool_cans[]
-)
+    int pool_cans[])
 {
     /*****************
      * Description:
@@ -49,8 +45,8 @@ int Toggle_CONTINUITY(
      *      - the number of candidates (pool size)
      *      - bring back the pool_cans array
      * ***************/
-    int skip, match;  // match: whether wet-dry status match; 1: match; 0: not match
-    int n_cans = 0;   // number of candidates fullfilling the CONTINUITY criteria (output)
+    int skip, match;                          // match: whether wet-dry status match; 1: match; 0: not match
+    int n_cans = 0;                           // number of candidates fullfilling the CONTINUITY criteria (output)
     skip = (int)((p_gp->CONTINUITY - 1) / 2); // p_gp->CONTINUITY == 1: skip=0; p_gp->CONTINUITY == 3: skip=1
 
     for (int k = skip; k < ndays_h - skip; k++)
@@ -77,21 +73,19 @@ int Toggle_CONTINUITY(
     return n_cans;
 }
 
-
-
 void Fragment_assign(
     struct df_rr_h *p_rrh,
     struct df_rr_h *p_out,
     struct Para_global *p_gp,
     struct df_coor *p_coor,
-    int fragment
-){
+    int fragment)
+{
     /**********
      * Description:
      *      disaggregate the target day rainfall into hourly scale based on the selected fragments
-     * Parameters: 
+     * Parameters:
      *      p_rrh: pointing to the hourly obs rr structure array
-     *      p_out: pointing to the disaggregated hourly rr results struct (to output) 
+     *      p_out: pointing to the disaggregated hourly rr results struct (to output)
      *      p_gp: global parameters struct
      *      fragment: the index of p_rrh struct after filtering and resampling
      * Output:
@@ -105,8 +99,8 @@ void Fragment_assign(
             if ((p_rrh + fragment)->rr_d[j] <= 0.0)
             {
                 /********
-                 * the rain site in the target day is wet while in candidate day it is dry, 
-                 * then no direct fragments can be borrowed to disaggregate. 
+                 * the rain site in the target day is wet while in candidate day it is dry,
+                 * then no direct fragments can be borrowed to disaggregate.
                  * **/
 
                 // for (h = 0; h < 24; h++)
@@ -118,18 +112,20 @@ void Fragment_assign(
                 /*********
                  * borrow fragments from nearest rainy (wet) neighbour
                  */
-                int id; 
+                int id;
                 int index = 0;
                 int wd = 0;
                 while (wd == 0 && index < p_gp->N_STATION - 1)
                 {
                     // p_gp->N_STATION - 1: number of neighbours
                     id = *((p_coor + j)->neighbors + index);
-                    if((p_rrh + fragment)->rr_d[id] > 0.0)
+                    if ((p_rrh + fragment)->rr_d[id] > 0.0)
                     {
                         // the neighbour is wet
                         wd = 1;
-                    } else {
+                    }
+                    else
+                    {
                         index += 1;
                     }
                 }
@@ -156,5 +152,3 @@ void Fragment_assign(
         }
     }
 }
-
-

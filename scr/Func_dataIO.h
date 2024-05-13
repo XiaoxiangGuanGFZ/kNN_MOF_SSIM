@@ -11,7 +11,7 @@ int import_dfrr_d(
     char FP_daily[], 
     int N_STATION,
     struct df_rr_d *p_rr_d
-) ;
+);
 
 int import_df_coor(
     char fname[],

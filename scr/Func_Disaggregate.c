@@ -9,24 +9,23 @@
  *               - circulation patterns (classification)
  *               - seasonality (summer or winter)
  *               - the similarity is represented by SSIM (structural Similarity Index Measure)
- *               - kNN is used to consider the uncertainty or variability 
+ *               - kNN is used to consider the uncertainty or variability
  * DESCRIP-END.
  * FUNCTIONS:    kNN_MOF_SSIM(); Toggle_WD(); kNN_SSIM_sampling();
  *               get_random(); weight_cdf_sample(); Fragment_assign();
- * 
+ *
  * COMMENTS:
- * 
+ *
  * REFERENCEs:
- * Xiaoxiang Guan, Katrin Nissen, Viet Dung Nguyen, Bruno Merz, Benjamin Winter, Sergiy Vorogushyn. 
- *      Multisite temporal rainfall disaggregation using methods of fragments conditioned on circulation patterns. 
+ * Xiaoxiang Guan, Katrin Nissen, Viet Dung Nguyen, Bruno Merz, Benjamin Winter, Sergiy Vorogushyn.
+ *      Multisite temporal rainfall disaggregation using methods of fragments conditioned on circulation patterns.
  *      Journal of Hydrology, 621, 129640. doi: https://doi.org/10.1016/j.jhydrol.2023.129640
  */
 
 /*******************************************************************************
  * VARIABLEs:
- * 
-*****/
-
+ *
+ *****/
 
 #include <stdio.h>
 #include <string.h>
@@ -48,8 +47,8 @@ void kNN_MOF_SSIM(
     struct df_coor *p_coor,
     int nrow_rr_d,
     int ndays_h,
-    int nrow_cp
-) {
+    int nrow_cp)
+{
     /*******************
      * Description:
      *  algorithm: k-nearest neighbouring sampling, method-of-fragments, circulation patterns and (or) seasonality
@@ -61,7 +60,7 @@ void kNN_MOF_SSIM(
      * *****************/
     int i, j, h, k, s, Toggle_wd;
     int class_t, class_c;
-    
+
     struct df_rr_h df_rr_h_out; // this is a struct variable, not a struct array;
     /************
      * CONTINUITY and skip
@@ -76,19 +75,21 @@ void kNN_MOF_SSIM(
     int fragment;          // the index of df_rr_h structure with the final chosed fragments
 
     FILE *p_FP_OUT;
-    if ((p_FP_OUT=fopen(p_gp->FP_OUT, "w")) == NULL) {
+    if ((p_FP_OUT = fopen(p_gp->FP_OUT, "w")) == NULL)
+    {
         printf("Program terminated: cannot create or open output file\n");
         exit(1);
     }
     for (i = 0; i < nrow_rr_d; i++)
-    { 
+    {
         // iterate each (possible) target day
         df_rr_h_out.date = (p_rrd + i)->date;
-        df_rr_h_out.rr_d = (p_rrd + i)->p_rr; // is this valid?; address transfer
-        df_rr_h_out.rr_h = calloc(p_gp->N_STATION, sizeof(double) * 24);  // allocate memory (stack);
-        Toggle_wd = 0;  // initialize with 0 (non-rainy)
+        df_rr_h_out.rr_d = (p_rrd + i)->p_rr;                            // is this valid?; address transfer
+        df_rr_h_out.rr_h = calloc(p_gp->N_STATION, sizeof(double) * 24); // allocate memory (stack);
+        Toggle_wd = 0;                                                   // initialize with 0 (non-rainy)
         Toggle_wd = Toggle_WD(p_gp->N_STATION, (p_rrd + i)->p_rr);
-        if (Toggle_wd == 0) {
+        if (Toggle_wd == 0)
+        {
             // this is a non-rainy day; all 0.0
             n_can = -1;
             for (j = 0; j < p_gp->N_STATION; j++)
@@ -103,19 +104,21 @@ void kNN_MOF_SSIM(
                 /* write the disaggregation output */
                 Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t + 1);
             }
-        } else {
+        }
+        else
+        {
             // Toggle_wd == 1; this is a rainy day; we will disaggregate it.
             int index = 0;
             /********
-             * flexible in wet-dry status filtering 
+             * flexible in wet-dry status filtering
              * n_can: the number of candidates after wet-dry status filtering
              * ********/
-            n_can = Toggle_CONTINUITY(p_rrh, p_rrd + i, p_gp, ndays_h, pool_cans); 
+            n_can = Toggle_CONTINUITY(p_rrh, p_rrd + i, p_gp, ndays_h, pool_cans);
             class_t = (p_rrd + i)->class;
             for (j = 0; j < n_can; j++)
             {
                 class_c = (p_rrh + pool_cans[j])->class; // the class of the candidate day
-                if (class_c == class_t)  // && Toggle_WD(p_gp->N_STATION, (p_rrh + pool_cans[j])->rr_d) == 1
+                if (class_c == class_t)                  // && Toggle_WD(p_gp->N_STATION, (p_rrh + pool_cans[j])->rr_d) == 1
                 {
                     /*********
                      * criteria:
@@ -129,8 +132,7 @@ void kNN_MOF_SSIM(
                         for (s = 0 - skip; s < 1 + skip; s++)
                         {
                             if (
-                                Toggle_WD(p_gp->N_STATION, (p_rrh + pool_cans[j] + s)->rr_d) != Toggle_WD(p_gp->N_STATION, (p_rrd + i + s)->p_rr)
-                            )
+                                Toggle_WD(p_gp->N_STATION, (p_rrh + pool_cans[j] + s)->rr_d) != Toggle_WD(p_gp->N_STATION, (p_rrd + i + s)->p_rr))
                             {
                                 test = 0;
                                 break;
@@ -150,13 +152,15 @@ void kNN_MOF_SSIM(
                 printf("No candidates!\n");
                 exit(1);
             }
-            
+
             int *index_fragment;
             index_fragment = (int *)malloc(sizeof(int) * p_gp->RUN);
             if (i >= skip && i < nrow_rr_d - skip)
             {
-                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, index, skip, p_gp->RUN,index_fragment);
-            } else {
+                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, index, skip, p_gp->RUN, index_fragment);
+            }
+            else
+            {
                 kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, index, 0, p_gp->RUN, index_fragment);
             }
             /*assign the sampled fragments to target day (disaggregation)*/
@@ -164,12 +168,12 @@ void kNN_MOF_SSIM(
             {
                 Fragment_assign(p_rrh, &df_rr_h_out, p_gp, p_coor, index_fragment[t]);
                 /* write the disaggregation output */
-                Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t+1);
+                Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t + 1);
             }
         }
-        
-        printf("%d-%02d-%02d: Done!\n", (p_rrd+i)->date.y, (p_rrd+i)->date.m, (p_rrd+i)->date.d);
-        free(df_rr_h_out.rr_h);  // free the memory allocated for disaggregated hourly output
+
+        printf("%d-%02d-%02d: Done!\n", (p_rrd + i)->date.y, (p_rrd + i)->date.m, (p_rrd + i)->date.d);
+        free(df_rr_h_out.rr_h); // free the memory allocated for disaggregated hourly output
     }
     fclose(p_FP_OUT);
 }
@@ -183,15 +187,15 @@ void kNN_SSIM_sampling(
     int n_can,
     int skip,
     int run,
-    int *index_fragment
-){
+    int *index_fragment)
+{
     /**************
      * Description:
      *      - compute the SSIM index of rr between target and candidate days
      *      - sort the distance in the decreasing order
      *      - select the sqrt(n_can) largest SSIM
      *      - weights defined based on SSIM: higher SSIM, heavier weight
-     *      - sample one candidate 
+     *      - sample one candidate
      * Parameters:
      *      p_rrd: the daily rainfall st (structure pointer)
      *      p_rrh: pointing to the hourly rr obs structure array
@@ -199,21 +203,25 @@ void kNN_SSIM_sampling(
      *      index_target: the index of target day to be disaggregated
      *      pool_cans: the index pool of candidats
      *      n_can: the number (or size) fo candidates pool
-     *      skip: due to the consideration of days before and after the target day, 
+     *      skip: due to the consideration of days before and after the target day,
      *              the first and last several days should be disaggregated by assuming CONTUNITY == 1
      * Output:
      *      return a vector (number) of sampled index (fragments source); how many RUNs of sampling
      * ***********/
-    double w_image[5] = {0.08333333, 0.1666667, 0.5, 0.1666667, 0.08333333};  // CONTUNITY == 5
+    double w_image[5] = {0.08333333, 0.1666667, 0.5, 0.1666667, 0.08333333}; // CONTUNITY == 5
     if (skip == 0)
     {
         // CONTUNITY == 1
         w_image[0] = 1.0;
-    } else if (skip == 1)
+    }
+    else if (skip == 1)
     {
         // CONTUNITY == 3
-        w_image[0] = 0.1666667; w_image[1] = 0.6666667; w_image[2] = 0.1666667;
-    } else if (skip > 5)
+        w_image[0] = 0.1666667;
+        w_image[1] = 0.6666667;
+        w_image[2] = 0.1666667;
+    }
+    else if (skip > 5)
     {
         printf("Currently CONTUNITY > 5 is not possible!\n");
         exit(1);
@@ -230,19 +238,21 @@ void kNN_SSIM_sampling(
     for (i = 0; i < n_can; i++)
     {
         *(SSIM + i) = 0.0;
-        for (s = 0-skip; s < 1+skip; s++)
+        for (s = 0 - skip; s < 1 + skip; s++)
         {
             if (Toggle_WD(p_gp->N_STATION, (p_rrd + index_target + s)->p_rr) == 0)
             {
                 SSIM_temp = w_image[s + skip] * 1.0;
-            } else {
+            }
+            else
+            {
                 SSIM_temp = w_image[s + skip] * meanSSIM(
-                                                   (p_rrd + index_target + s)->p_rr,
-                                                   (p_rrh + pool_cans[i] + s)->rr_d,
-                                                   p_gp->NODATA,
-                                                   p_gp->N_STATION,
-                                                   p_gp->k,
-                                                   p_gp->power);
+                                                    (p_rrd + index_target + s)->p_rr,
+                                                    (p_rrh + pool_cans[i] + s)->rr_d,
+                                                    p_gp->NODATA,
+                                                    p_gp->N_STATION,
+                                                    p_gp->k,
+                                                    p_gp->power);
             }
             *(SSIM + i) += SSIM_temp;
         }
@@ -263,4 +273,3 @@ void kNN_SSIM_sampling(
     }
     free(SSIM);
 }
-

@@ -1,6 +1,5 @@
 
 
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -12,18 +11,16 @@
 #include "Func_Disaggregate.h"
 #include "Func_dataIO.h"
 
-
 void similarity_sorting(
     double *similarity,
     int *pool_cans,
     int order,
-    int n_can
-)
+    int n_can)
 {
     int i, j;
-    int temp_c;  // temporary variable during sorting 
+    int temp_c; // temporary variable during sorting
     double temp_d;
-    
+
     if (order == 1)
     {
         // sort in the decreasing order
@@ -42,7 +39,9 @@ void similarity_sorting(
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         // sort in the increasing order
         for (i = 0; i < n_can - 1; i++)
         {
@@ -62,51 +61,50 @@ void similarity_sorting(
     }
 }
 
-
 void similarity_weight(
     double *similarity,
     int *pool_cans,
     int order,
     int n_can,
     int *size_pool,
-    double **weights
-)
+    double **weights)
 {
     int i;
     /******
-     * *size_pool: 
+     * *size_pool:
      * the size of candidate pool in kNN algorithm
      *      the range of size_pool:
      *      [2, n_can]
      ****/
     // int size_pool;
     *size_pool = (int)sqrt(n_can) + 1;
-    
+
     *weights = (double *)malloc(*size_pool * sizeof(double)); // a double array with the size of size_pool
     double w_sum = 0.0;
     if (order == 1)
     {
         /*****
-         * like: SSIM; 
+         * like: SSIM;
          * larger SSIM, higher weight
-         * **/ 
+         * **/
         for (i = 0; i < *size_pool; i++)
         {
             *(*weights + i) = similarity[i] + 1;
             w_sum += similarity[i] + 1;
         }
-    } else {
+    }
+    else
+    {
         /******
-         * like: Manhattan distance; 
+         * like: Manhattan distance;
          * larger distance, lower weight
-         * ***/ 
+         * ***/
         for (i = 0; i < *size_pool; i++)
         {
-            *(*weights + i) = 1.0 / (similarity[i] + 1);  // inverse distance
+            *(*weights + i) = 1.0 / (similarity[i] + 1); // inverse distance
             w_sum += 1.0 / (similarity[i] + 1);
         }
     }
-    
 
     for (i = 0; i < *size_pool; i++)
     {
@@ -120,8 +118,7 @@ void kNN_sampling(
     int order,
     int n_can,
     int run,
-    int *index_fragment
-)
+    int *index_fragment)
 {
 
     similarity_sorting(similarity, pool_cans, order, n_can);
@@ -147,19 +144,19 @@ void kNN_sampling(
     free(weights_cdf);
 }
 
-double get_random() 
+double get_random()
 {
-    return ((double)rand() / (double)RAND_MAX); 
+    return ((double)rand() / (double)RAND_MAX);
 }
 
 int weight_cdf_sample(
     int size_pool,
     int pool_cans[],
-    double *weights_cdf    
-) {
+    double *weights_cdf)
+{
     int i;
-    double rd = 0.0;  // a random decimal value between 0.0 and 1.0
-    int index_out; // the output of this function: the sampled fragment from candidates pool
+    double rd = 0.0; // a random decimal value between 0.0 and 1.0
+    int index_out;   // the output of this function: the sampled fragment from candidates pool
 
     // srand(time(NULL)); // randomize seed
     rd = get_random(); // call the function to get a different value of n every time
@@ -180,4 +177,3 @@ int weight_cdf_sample(
     }
     return index_out;
 }
-
