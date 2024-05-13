@@ -16,6 +16,8 @@ set(SOURCE_FILES
     Func_Initialize.c
     Func_SSIM.c
     Func_Disaggregate.c
+    Func_kNN.c
+    Func_fragments.c
 )
 
 project(kNN_MOF_SSIM)  # Set your project name here
