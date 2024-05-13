@@ -15,11 +15,6 @@ void kNN_MOF_SSIM(
 );
 
 
-int Toggle_WD(
-    int N_STATION,
-    double *p_rr_d
-);
-
 void kNN_SSIM_sampling(
     struct df_rr_d *p_rrd,
     struct df_rr_h *p_rrh,
@@ -28,23 +23,8 @@ void kNN_SSIM_sampling(
     int pool_cans[],
     int n_can,
     int skip,
+    int run,
     int *index_fragment
-);
-
-double get_random();
-
-int weight_cdf_sample(
-    int size_pool,
-    int pool_cans[],
-    double *weights_cdf    
-);
-
-void Fragment_assign(
-    struct df_rr_h *p_rrh,
-    struct df_rr_h *p_out,
-    struct Para_global *p_gp,
-    struct df_coor *p_coor,
-    int fragment
 );
 
 

@@ -7,6 +7,8 @@
 #include "Func_dataIO.h"
 #include "Func_Initialize.h"
 #include "Func_SSIM.h"
+#include "Func_Fragments.h"
+#include "Func_kNN.h"
 #include "Func_Disaggregate.h"
 
 /****** exit description *****
@@ -124,29 +126,21 @@ int main(int argc, char * argv[]) {
     time(&tm); printf("------ Import rainsite coor (Done): %s\n", ctime(&tm)); 
     fprintf(p_log, "------ Import rainsite coor (Done): %s\n", ctime(&tm));
 
-    // printf("neighbors for site: %d\n", 9);
-    // for (size_t i = 0; i < nrow_coor - 1; i++)
-    // {
-    //     printf("rank: %03d  id: %03d\n", i, *((p_coor + 9)->neighbors + i));
-    // }
-    // exit(0);
-
     /****** import daily rainfall data (to be disaggregated) *******/
     
     static struct df_rr_d df_rr_daily[MAXrow];
     int nrow_rr_d;
     nrow_rr_d = import_dfrr_d(
-        Para_df.FP_DAILY, 
+        Para_df.FP_DAILY,
         Para_df.N_STATION,
-        df_rr_daily
-    );
+        df_rr_daily);
     initialize_dfrr_d(
         p_gp,
         df_rr_daily,
         df_cps,
         nrow_rr_d,
         nrow_cp);
-    
+
     time(&tm);
     printf("------ Import daily rr data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rr data (Done): %s", ctime(&tm));
     
@@ -211,12 +205,11 @@ int main(int argc, char * argv[]) {
         df_rr_hourly,
         df_rr_daily,
         df_cps,
-        p_gp,  // the pointer pointing to Para_df structure;
+        p_gp,
         p_coor,
         nrow_rr_d,
         ndays_h,
-        nrow_cp
-    );
+        nrow_cp);
     fclose(p_SSIM);
     time(&tm);
     printf("------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
