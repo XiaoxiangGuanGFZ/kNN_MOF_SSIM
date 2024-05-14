@@ -16,24 +16,33 @@ FP_CP,D:/kNN_MOF_SSIM/data/cp_series.csv
 # the file path and name of the observed hourly rainfall data
 FP_HOURLY,D:/kNN_MOF_SSIM/data/rr_obs_hourly.csv
 
-# the file path to store the disaggregated hourly rr results
+# the file path and name to store the disaggregated hourly rr results
 FP_OUT,D:/kNN_MOF_SSIM/output/rr_sim_hourly.csv
 
+# the file path and name to store the running log info
 FP_LOG,D:/kNN_MOF_SSIM/my.log
+
+# the file path and name to store the largest k SSIM in candidates filtering
+# when FP_SSIM == FALSE, no SSIM is exported from the program
+FP_SSIM,D:/kNN_MOF_SSIM/output/SSIM.csv
 
 # ------- the parameters in kNN_MOF_SSIM algorithm ---------
 # number of the rain stations
 N_STATION,134
 
 # T_CP == TRUE: the disaggregation algorithm conditioned on circulation patterns
-# otherwise, on seasonality (12 months) only
-T_CP,TRUE
+# otherwise, on seasonality (12 months)
+T_CP,FALSE
 
-# SEASON: only valid when T_CP == TRUE; meaning that the disaggregation is conditioned both
-# on cp and seasonality (two seasons: summer and winter)
+# SEASON, SUMMER_FROM, and SUMMER_TO: only valid when T_CP == TRUE; 
+# SEASON == TRUE, meaning that the disaggregation is conditioned both
+# on cp and seasonality (here only two seasons: summer and winter)
+
+SEASON,TRUE
+
+
 # summer: from May to October (5-10)
 # winter: from November to next April (11-4)
-SEASON,TRUE
 
 SUMMER_FROM,5
 
@@ -45,7 +54,8 @@ CONTINUITY,1
 # the flexibility level of wet-dry status in candidates filtering
 # WD:0 very strict, only the candidates with exact the same wet-dry status of target day can be selected
 # WD:1 flexible, the candidates with same wet-dry status covering that of target day will be selected
-WD,1
+# WD:-1 no restriction in terms of wet-dry status, calculate the SSIM as long as the candidate is wet in some sites
+WD,-1
 
 # Structural Similarity Index (SSIM) parameters
 SSIM_K,0.01,0.03,0.0212
@@ -54,4 +64,4 @@ SSIM_POWER,1,1,1
 
 NODATA,-99
 
-RUN,3
+RUN,1
