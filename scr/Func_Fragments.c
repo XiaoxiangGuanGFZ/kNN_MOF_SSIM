@@ -16,7 +16,7 @@ int Toggle_WD(
     int WD = 0;
     for (size_t i = 0; i < N_STATION; i++)
     {
-        if (*(p_rr_d + i) > 0.0)
+        if (*(p_rr_d + i) > FloatZero)
         {
             WD = 1;
             break;
@@ -48,26 +48,67 @@ int Toggle_CONTINUITY(
     int skip, match;                          // match: whether wet-dry status match; 1: match; 0: not match
     int n_cans = 0;                           // number of candidates fullfilling the CONTINUITY criteria (output)
     skip = (int)((p_gp->CONTINUITY - 1) / 2); // p_gp->CONTINUITY == 1: skip=0; p_gp->CONTINUITY == 3: skip=1
-
-    for (int k = skip; k < ndays_h - skip; k++)
+    if (p_gp->WD == 1)
     {
-        // iterate each day in hourly observations
-        match = 1;
-        for (int s = 0; s < p_gp->N_STATION; s++)
+        for (int k = skip; k < ndays_h - skip; k++)
         {
-            /* flexible wet-dry status matching*/
-            if (
-                p_rrd->p_rr[s] > 0.0 && (p_rrh + k)->rr_d[s] == 0.0)
+            // iterate each day in hourly observations
+            match = 1;
+            for (int s = 0; s < p_gp->N_STATION; s++)
             {
-                match = 0;
-                break;
+                /* flexible wet-dry status matching*/
+                if (p_rrd->p_rr[s] > FloatZero && (p_rrh + k)->rr_d[s] <= FloatZero)
+                {
+                    match = 0;
+                    break;
+                }
+            }
+
+            if (match == 1)
+            {
+                *(pool_cans + n_cans) = k;
+                n_cans++;
             }
         }
-
-        if (match == 1)
+    }
+    else if (p_gp->WD == 0)
+    {
+        // strict; wet == wet or dry == dry for each site
+        for (int k = skip; k < ndays_h - skip; k++)
         {
-            *(pool_cans + n_cans) = k;
-            n_cans++;
+            // iterate each day in hourly observations
+            match = 1;
+            for (int s = 0; s < p_gp->N_STATION; s++)
+            {
+                if (
+                    (p_rrd->p_rr[s] > FloatZero && (p_rrh + k)->rr_d[s] <= FloatZero) || 
+                    (p_rrd->p_rr[s] <= FloatZero && (p_rrh + k)->rr_d[s] > FloatZero)
+                    )
+                {
+                    match = 0;
+                    break;
+                }
+            }
+
+            if (match == 1)
+            {
+                *(pool_cans + n_cans) = k;
+                n_cans++;
+            }
+        }
+    }
+    else if (p_gp->WD == -1)
+    {
+        /********
+         * as long as it is a wet day; don't care the wet-dry match 
+         * ****/
+        for (int k = skip; k < ndays_h - skip; k++)
+        {
+            if (Toggle_WD(p_gp->N_STATION, (p_rrh + k)->rr_d) == 1)
+            {
+                *(pool_cans + n_cans) = k;
+                n_cans++;
+            }
         }
     }
     return n_cans;

@@ -4,6 +4,7 @@
 #define MAXCHAR 10000  // able to accomodate up to 3000 sites simultaneously
 #define MAXrow 100000  // almost 270 years long ts
 #define MAXcps 20
+#define FloatZero 0.005
 /******
  * the following define the structures
 */

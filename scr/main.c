@@ -32,7 +32,7 @@ FILE *p_log;  // file pointer pointing to log file
 
 /***************************************
  * main function 
-*/
+**************************************/
 int main(int argc, char * argv[]) {
     /*
     int argc: the number of parameters of main() function;
@@ -123,8 +123,8 @@ int main(int argc, char * argv[]) {
     p_coor = (struct df_coor *)malloc(sizeof(struct df_coor) * p_gp->N_STATION * 2);
     nrow_coor = import_df_coor(p_gp->FP_COOR, p_coor);
     initialize_df_coor(p_gp, &p_coor, nrow_coor);
-    time(&tm); printf("------ Import rainsite coor (Done): %s\n", ctime(&tm)); 
-    fprintf(p_log, "------ Import rainsite coor (Done): %s\n", ctime(&tm));
+    time(&tm); printf("------ Import rainsite coor (Done): %s", ctime(&tm)); 
+    fprintf(p_log, "------ Import rainsite coor (Done): %s", ctime(&tm));
 
     /****** import daily rainfall data (to be disaggregated) *******/
     
@@ -142,7 +142,7 @@ int main(int argc, char * argv[]) {
         nrow_cp);
 
     time(&tm);
-    printf("------ Import daily rr data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rr data (Done): %s", ctime(&tm));
+    printf("------ Import daily rainfall data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rainfall data (Done): %s", ctime(&tm));
     
     printf("* the total rows: %d\n", nrow_rr_d); fprintf(p_log, "* the total rows: %d\n", nrow_rr_d);
     
@@ -174,7 +174,7 @@ int main(int argc, char * argv[]) {
         nrow_cp);
     
     time(&tm);
-    printf("------ Import hourly rr data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import hourly rr data (Done): %s", ctime(&tm));
+    printf("------ Import hourly rainfall data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import hourly rainfall data (Done): %s", ctime(&tm));
     
     printf("* total hourly obs days: %d\n", ndays_h); fprintf(p_log, "* total hourly obs days: %d\n", ndays_h);
     

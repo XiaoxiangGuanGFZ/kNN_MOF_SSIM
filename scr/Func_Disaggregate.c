@@ -24,7 +24,7 @@
 
 /*******************************************************************************
  * VARIABLEs:
- *
+ * 
  *****/
 
 #include <stdio.h>
@@ -152,16 +152,17 @@ void kNN_MOF_SSIM(
                 printf("No candidates!\n");
                 exit(1);
             }
+            n_can = index;
 
             int *index_fragment;
             index_fragment = (int *)malloc(sizeof(int) * p_gp->RUN);
             if (i >= skip && i < nrow_rr_d - skip)
             {
-                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, index, skip, p_gp->RUN, index_fragment);
+                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, n_can, skip, p_gp->RUN, index_fragment);
             }
             else
             {
-                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, index, 0, p_gp->RUN, index_fragment);
+                kNN_SSIM_sampling(p_rrd, p_rrh, p_gp, i, pool_cans, n_can, 0, p_gp->RUN, index_fragment);
             }
             /*assign the sampled fragments to target day (disaggregation)*/
             for (size_t t = 0; t < p_gp->RUN; t++)
