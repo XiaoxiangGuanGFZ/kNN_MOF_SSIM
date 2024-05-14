@@ -10,6 +10,7 @@
 #include "Func_Fragments.h"
 #include "Func_kNN.h"
 #include "Func_Disaggregate.h"
+#include "Func_Prepro.h"
 
 /****** exit description *****
  * void exit(int status);
@@ -193,6 +194,23 @@ int main(int argc, char * argv[]) {
     view_class_rrh(df_rr_hourly, ndays_h);
     /****** maxima of rainfall value (L value in SSIM algorithm) *******/
     // initialize_L(df_rr_hourly, df_rr_daily, p_gp, nrow_rr_d, ndays_h);
+
+    /****** rainfall data preprocessing: normalization / standardization *******/
+    Standardize_rain(
+        p_gp,
+        df_rr_daily,
+        df_rr_hourly,
+        nrow_rr_d,
+        ndays_h);
+    // for (size_t i = 0; i < p_gp->N_STATION; i++)
+    // {
+    //     printf("%f,", df_rr_daily->p_rr_pre[i]);
+    // }
+    // exit(3);
+    time(&tm);
+    printf("------ Rainfall data preprocessing (Done): %s", ctime(&tm));
+    fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
+
     /****** Disaggregation: kNN_MOF_cp *******/
     
     if ((p_SSIM=fopen("D:/kNN_MOF_SSIM/output/SSIM.csv", "w")) == NULL) {

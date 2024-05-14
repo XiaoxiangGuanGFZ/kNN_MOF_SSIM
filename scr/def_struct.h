@@ -22,6 +22,7 @@ struct df_rr_d
      */
     struct Date date;    
     double *p_rr;
+    double *p_rr_pre;
     int cp;
     int season;
     int class;
@@ -48,6 +49,7 @@ struct df_rr_h
     struct Date date;    
     double (*rr_h)[24];
     double *rr_d;
+    double *rr_d_pre;
     int cp;
     int season;
     int class;
