@@ -271,13 +271,17 @@ void kNN_SSIM_sampling(
     /**********
      * print the largest k SSIM values and corresponding candidate dates
      * ********/
-    int size_pool; // the k in kNN
-    size_pool = (int)sqrt(n_can) + 1;
-    for (i = 0; i < size_pool; i++)
+    if (p_gp->flag_SSIM == 1)
     {
-        fprintf(p_SSIM, "%d-%02d-%02d,", (p_rrd + index_target)->date.y, (p_rrd + index_target)->date.m, (p_rrd + index_target)->date.d);
-        fprintf(p_SSIM, "%d,%d,%f,", i, pool_cans[i], SSIM[i]);
-        fprintf(p_SSIM, "%d-%02d-%02d\n", (p_rrh + pool_cans[i])->date.y, (p_rrh + pool_cans[i])->date.m, (p_rrh + pool_cans[i])->date.d);
+        int size_pool; // the k in kNN
+        size_pool = (int)sqrt(n_can) + 1;
+        for (i = 0; i < size_pool; i++)
+        {
+            fprintf(p_SSIM, "%d-%02d-%02d,", (p_rrd + index_target)->date.y, (p_rrd + index_target)->date.m, (p_rrd + index_target)->date.d);
+            fprintf(p_SSIM, "%d,%d,%f,", i, pool_cans[i], SSIM[i]);
+            fprintf(p_SSIM, "%d-%02d-%02d\n", (p_rrh + pool_cans[i])->date.y, (p_rrh + pool_cans[i])->date.m, (p_rrh + pool_cans[i])->date.d);
+        }
     }
+
     free(SSIM);
 }

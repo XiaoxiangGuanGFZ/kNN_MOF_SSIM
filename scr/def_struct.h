@@ -74,6 +74,7 @@ struct Para_global
         char FP_HOURLY[200];    // file path of hourly precipitation data (as fragments)
         char FP_OUT[200];       // file path of output(hourly) precipitation from disaggregation
         char FP_LOG[200];       // file path of log file
+        char FP_SSIM[200];      // file path of the output SSIM file
         int N_STATION;          // number of stations (rain sites)
         char T_CP[10];          // toggle (flag), whether the CP is considered in the algorithm
         char SEASON[10];        // toggle (flag), whether the seasonality is considered in the algorithm
@@ -87,6 +88,8 @@ struct Para_global
         double power[3];        // 3 paras in SSIM
         double NODATA;          // nodata value
         int RUN;                // simulation runs 
+
+        int flag_SSIM;          // flag, whether to write SSIM 
     };
 
 

@@ -212,12 +212,16 @@ int main(int argc, char * argv[]) {
     fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
 
     /****** Disaggregation: kNN_MOF_cp *******/
-    
-    if ((p_SSIM=fopen("D:/kNN_MOF_SSIM/output/SSIM.csv", "w")) == NULL) {
-        printf("cannot create / open SSIM file\n");
-        exit(1);
+    if (p_gp->flag_SSIM == 1)
+    {
+        if ((p_SSIM = fopen(p_gp->FP_SSIM, "w")) == NULL)
+        {
+            printf("Cannot create / open SSIM file: %s\n", p_gp->FP_SSIM);
+            exit(1);
+        }
+        fprintf(p_SSIM, "target,ID,index_Frag,SSIM,candidate\n");
     }
-    fprintf(p_SSIM, "target,ID,index_Frag,SSIM,candidate\n");
+
     printf("------ Disaggregating: ... \n");
     kNN_MOF_SSIM(
         df_rr_hourly,

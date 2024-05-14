@@ -105,6 +105,10 @@ void import_global(
                 {
                     strcpy(p_gp->FP_HOURLY, token2);
                 }
+                else if (strncmp(token, "FP_SSIM", 7) == 0)
+                {
+                    strcpy(p_gp->FP_SSIM, token2);
+                }
                 else if (strncmp(token, "SEASON", 6) == 0)
                 {
                     strcpy(p_gp->SEASON, token2);
@@ -176,6 +180,13 @@ void import_global(
         }
     }
     fclose(fp);
+    if (strncmp(p_gp->FP_SSIM, "FALSE", 5) == 0)
+    {
+        p_gp->flag_SSIM = 0;
+    } else {
+        p_gp->flag_SSIM = 1;
+    }
+    
 }
 
 void removeLeadingSpaces(char *str)
