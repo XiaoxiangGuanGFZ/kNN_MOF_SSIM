@@ -5,6 +5,7 @@
 #define MAXrow 100000  // almost 270 years long ts
 #define MAXcps 20
 #define FloatZero 0.005
+
 /******
  * the following define the structures
 */
@@ -24,7 +25,7 @@ struct df_rr_d
     double *p_rr;
     double *p_rr_pre;
     int cp;
-    int season;
+    int SM;
     int class;
 };
 
@@ -51,7 +52,7 @@ struct df_rr_h
     double *rr_d;
     double *rr_d_pre;
     int cp;
-    int season;
+    int SM;
     int class;
 };
 
@@ -75,21 +76,27 @@ struct Para_global
         char FP_OUT[200];       // file path of output(hourly) precipitation from disaggregation
         char FP_LOG[200];       // file path of log file
         char FP_SSIM[200];      // file path of the output SSIM file
+        
         int N_STATION;          // number of stations (rain sites)
         char T_CP[10];          // toggle (flag), whether the CP is considered in the algorithm
+        char MONTH[10];         // toggle (flag), conditioned on month: 12 months
         char SEASON[10];        // toggle (flag), whether the seasonality is considered in the algorithm
         int SUMMER_FROM;        // the beginning month of summer
         int SUMMER_TO;          // the end month of summer
+
         int CONTINUITY;         // continuity day
         int WD;                 // the flexibility level of wet-dry status in candidates filtering
         int CLASS_N;            // total categories the series is classified into
 
+        /*************
+         * SSIM parameters
+         * ********/
         double k[3];            // 3 parameters in SSIM
         double power[3];        // 3 paras in SSIM
         double NODATA;          // nodata value
-        int RUN;                // simulation runs 
-
         int flag_SSIM;          // flag, whether to write SSIM 
+
+        int RUN;                // simulation runs 
     };
 
 

@@ -35,69 +35,112 @@ void initialize_dfrr_d(
     int nrow_cp
 )
 {
+    if (strncmp(p_gp->MONTH, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0) 
+    {
+        printf("The disaggregation can only be conditioned on either MONTH or SEASON!\n");
+        exit(1);
+    }
+
     /*******
      * assign each day the cp value
-    */
+     */
+    int N_CP_CLASS;
+    int N_SM_CLASS;
     if (strncmp(p_gp->T_CP, "TRUE", 4) == 0)
     {
+        N_CP_CLASS = CP_classes(p_cp, nrow_cp);
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
-            (p_rr_d + i)->cp =
-                Toogle_CP(
-                    (p_rr_d + i)->date,
-                    p_cp,
-                    nrow_cp);
+            (p_rr_d + i)->cp = Toogle_CP((p_rr_d + i)->date, p_cp, nrow_cp);
+        }
+    }
+    else
+    {
+        N_CP_CLASS = 0;
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_d + i)->cp = 0;
         }
     }
 
     /*******
      * assign each day the season (summer or winter) value
-    */
+     */
     if (strncmp(p_gp->SEASON, "TRUE", 4) == 0) {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             if ((p_rr_d + i)->date.m >= p_gp->SUMMER_FROM && (p_rr_d + i)->date.m <= p_gp->SUMMER_TO)
             {
-                (p_rr_d + i)->season = 1; // summer
+                (p_rr_d + i)->SM = 1; // summer
             } else {
-                (p_rr_d + i)->season = 0; // winter
+                (p_rr_d + i)->SM = 0; // winter
             }
         }
+        N_SM_CLASS = 2;
+    }
+    else if (strncmp(p_gp->MONTH, "TRUE", 4) == 0)
+    {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_d + i)->SM = (p_rr_d + i)->date.m - 1;
+        }
+        N_SM_CLASS = 12;
+    } else {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_d + i)->SM = 0;
+        }
+        N_SM_CLASS = 0;
     }
 
-    /**********
-     * assign each day a class value based on different combination
-     * - CP and SEASON
-     * - CP only
-     * - SEASON only
-     * - neither
-    */
-    if (strncmp(p_gp->T_CP, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) != 0)
+    if (N_SM_CLASS > 0 && N_CP_CLASS > 0)
     {
-        p_gp->CLASS_N = CP_classes(p_cp, nrow_cp);
+        p_gp->CLASS_N = N_SM_CLASS * N_CP_CLASS;
+    } else if (N_SM_CLASS > 0 && N_CP_CLASS == 0)
+    {
+        p_gp->CLASS_N = N_SM_CLASS;
+    } else if (N_SM_CLASS == 0 && N_CP_CLASS > 0)
+    {
+        p_gp->CLASS_N = N_CP_CLASS;
+    } else {
+        p_gp->CLASS_N = 0;
+    }
+
+    /******************
+     * time series is classified based on following combinations:
+     * - month alone
+     * - season alone
+     * - month and cp
+     * - season and cp
+     * - cp alone
+     * - nothing
+     * ****/
+    if (N_CP_CLASS > 0 && N_SM_CLASS > 0)
+    {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_d + i)->class = ((p_rr_d + i)->cp - 1) + N_CP_CLASS * (p_rr_d + i)->SM;
+        }
+    }
+    else if (N_CP_CLASS > 0 && N_SM_CLASS == 0)
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             (p_rr_d + i)->class = (p_rr_d + i)->cp - 1;
         }
-    } else if (strncmp(p_gp->T_CP, "TRUE", 4) != 0 && strncmp(p_gp->SEASON, "TRUE", 4) != 0)
+    }
+    else if (N_CP_CLASS == 0 && N_SM_CLASS > 0)
     {
-        p_gp->CLASS_N = 1;
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_d + i)->class = (p_rr_d + i)->SM;
+        }
+    }
+    else
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             (p_rr_d + i)->class = 0;
-        }
-    } else if (strncmp(p_gp->T_CP, "TRUE", 4) != 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0)
-    {
-        p_gp->CLASS_N = 2;
-        for (size_t i = 0; i < nrow_rr_d; i++)
-        {
-            (p_rr_d + i)->class = (p_rr_d + i)->season;
-        }
-    } else {
-        p_gp->CLASS_N = CP_classes(p_cp, nrow_cp) * 2;
-        for (size_t i = 0; i < nrow_rr_d; i++)
-        {
-            (p_rr_d + i)->class = ((p_rr_d + i)->cp - 1) * 2 + (p_rr_d + i)->season;
         }
     }
 }
@@ -111,18 +154,30 @@ void initialize_dfrr_h(
     int nrow_cp
 )
 {
+    if (strncmp(p_gp->MONTH, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0)
+    {
+        printf("The disaggregation can only be conditioned on either MONTH or SEASON!\n");
+        exit(1);
+    }
+
     /*******
      * assign each day the cp value
-    */
+     */
+    int N_CP_CLASS, N_SM_CLASS;
     if (strncmp(p_gp->T_CP, "TRUE", 4) == 0)
     {
+        N_CP_CLASS = CP_classes(p_cp, nrow_cp);
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
-            (p_rr_h + i)->cp =
-                Toogle_CP(
-                    (p_rr_h + i)->date,
-                    p_cp,
-                    nrow_cp);
+            (p_rr_h + i)->cp = Toogle_CP((p_rr_h + i)->date, p_cp, nrow_cp);
+        }
+    }
+    else
+    {
+        N_CP_CLASS = 0;
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_h + i)->cp = 0;
         }
     }
 
@@ -134,46 +189,64 @@ void initialize_dfrr_h(
         {
             if ((p_rr_h + i)->date.m >= p_gp->SUMMER_FROM && (p_rr_h + i)->date.m <= p_gp->SUMMER_TO)
             {
-                (p_rr_h + i)->season = 1; // summer
+                (p_rr_h + i)->SM = 1; // summer
             } else {
-                (p_rr_h + i)->season = 0; // winter
+                (p_rr_h + i)->SM = 0; // winter
             }
         }
+        N_SM_CLASS = 2;
+    }
+    else if (strncmp(p_gp->MONTH, "TRUE", 4) == 0)
+    {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_h + i)->SM = (p_rr_h + i)->date.m - 1;
+        }
+        N_SM_CLASS = 12;
+    } else {
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_h + i)->SM = 0;
+        }
+        N_SM_CLASS = 0;
     }
 
-    /**********
-     * assign each day a class value based on different combination
-     * - CP and SEASON
-     * - CP only
-     * - SEASON only
-     * - neither
-    */
-    if (strncmp(p_gp->T_CP, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) != 0)
+    /******************
+     * time series is classified based on following combinations: 
+     * - month alone
+     * - season alone
+     * - month and cp
+     * - season and cp
+     * - cp alone
+     * - nothing
+     * ****/
+
+    if (N_CP_CLASS > 0 && N_SM_CLASS > 0)
     {
-        p_gp->CLASS_N = CP_classes(p_cp, nrow_cp);
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_h + i)->class = ((p_rr_h + i)->cp - 1) + N_CP_CLASS * (p_rr_h + i)->SM;
+        }
+    }
+    else if (N_CP_CLASS > 0 && N_SM_CLASS == 0)
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             (p_rr_h + i)->class = (p_rr_h + i)->cp - 1;
         }
-    } else if (strncmp(p_gp->T_CP, "TRUE", 4) != 0 && strncmp(p_gp->SEASON, "TRUE", 4) != 0)
+    }
+    else if (N_CP_CLASS == 0 && N_SM_CLASS > 0)
     {
-        p_gp->CLASS_N = 1;
+        for (size_t i = 0; i < nrow_rr_d; i++)
+        {
+            (p_rr_h + i)->class = (p_rr_h + i)->SM;
+        }
+    }
+    else
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             (p_rr_h + i)->class = 0;
-        }
-    } else if (strncmp(p_gp->T_CP, "TRUE", 4) != 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0)
-    {
-        p_gp->CLASS_N = 2;
-        for (size_t i = 0; i < nrow_rr_d; i++)
-        {
-            (p_rr_h + i)->class = (p_rr_h + i)->season;
-        }
-    } else {
-        p_gp->CLASS_N = CP_classes(p_cp, nrow_cp) * 2;
-        for (size_t i = 0; i < nrow_rr_d; i++)
-        {
-            (p_rr_h + i)->class = ((p_rr_h + i)->cp - 1) * 2 + (p_rr_h + i)->season;
         }
     }
 }
@@ -221,6 +294,7 @@ int CP_classes(
     int nrow_cp
 )
 {
+    // derive the number of circulation pattern classes
     int cp_max=0;
     for (size_t i = 0; i < nrow_cp; i++)
     {
@@ -233,6 +307,13 @@ int CP_classes(
 }
 
 
+/**********************
+ * view_class:
+ * print the classes and corresponding sample sizes of both 
+ * daily (to disaggregate) and hourly (fragments donor)
+ * time series of the variable.
+ * 
+ * *********************/
 
 void view_class_rrd(
     struct df_rr_d *p_rr_d,
@@ -274,7 +355,7 @@ void view_class_rrd(
     printf("* class-counts:\n   - class: "); fprintf(p_log, "* class-counts:\n   - class: ");
     for (size_t t = 0; t < n_classes; t++)
     {
-        printf("%5d ", t + 1); fprintf(p_log, "%5d ", t + 1);
+        printf("%5ld ", t + 1); fprintf(p_log, "%5ld ", t + 1);
     }
     printf("\n"); fprintf(p_log, "\n");
 
@@ -328,7 +409,7 @@ void view_class_rrh(
     printf("* class-counts:\n   - class: "); fprintf(p_log, "* class-counts:\n   - class: ");
     for (size_t t = 0; t < n_classes; t++)
     {
-        printf("%5d ", t + 1); fprintf(p_log, "%5d ", t + 1);
+        printf("%5ld ", t + 1); fprintf(p_log, "%5ld ", t + 1);
     }
     printf("\n"); fprintf(p_log, "\n");
 
@@ -340,6 +421,10 @@ void view_class_rrh(
     printf("\n"); fprintf(p_log, "\n");
 }
 
+/*********************
+ * coordinates of weather sites 
+ * in this multi-site disaggregation algorithm
+ * ****************/
 void initialize_df_coor(
     struct Para_global *p_gp,
     struct df_coor **p_coor,
@@ -425,7 +510,3 @@ double COOR_distance(
     return d;
 }
 
-
-/***********************
- * normalization 
- * *********************/

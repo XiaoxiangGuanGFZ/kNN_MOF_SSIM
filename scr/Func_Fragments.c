@@ -12,7 +12,9 @@ int Toggle_WD(
 {
     /***********
      * rainy day (wet, WD == 1) or non rainy day (dry, WD == 0)
-     */
+     * - wet: as long as there is a wet site
+     * - dry: not a single wet site
+     ***********/
     int WD = 0;
     for (size_t i = 0; i < N_STATION; i++)
     {
@@ -112,6 +114,57 @@ int Toggle_CONTINUITY(
         }
     }
     return n_cans;
+}
+
+
+int Filter_WD_Class(
+    struct df_rr_h *p_rrh,
+    struct df_rr_d *p_rrd,
+    struct Para_global *p_gp,
+    int id_target,
+    int CLASS_target,
+    int ndays_h,
+    int nrow_rr_d,
+    int n_can,
+    int pool_cans[]
+)
+{
+    int index = 0;
+    int skip = 0;
+    skip = (int)((p_gp->CONTINUITY - 1) / 2);
+    int CLASS_candidate;
+    for (size_t i = 0; i < n_can; i++)
+    {
+        /*********
+         * criteria:
+         * - class: cp type and seasonality
+         * - the days before and after the target day exist, if CONTUNITY > 1
+         * - wet-dry status of the days before and after the target day should be identical to those of the candidate
+         * ******/
+        CLASS_candidate = (p_rrh + pool_cans[i])->class; // the class of the candidate day
+        if (CLASS_candidate == CLASS_target) 
+        {
+            int test = 1;
+            if (skip > 0 && id_target >= skip && id_target < nrow_rr_d - skip)
+            {
+                for (int s = 0 - skip; s < 1 + skip; s++)
+                {
+                    if (
+                        Toggle_WD(p_gp->N_STATION, (p_rrh + pool_cans[i] + s)->rr_d) != Toggle_WD(p_gp->N_STATION, (p_rrd + id_target + s)->p_rr))
+                    {
+                        test = 0;
+                        break;
+                    }
+                }
+            }
+            if (test == 1)
+            {
+                pool_cans[index] = pool_cans[i];
+                index += 1;
+            }
+        }
+    }
+    return(index);  // the number of candidates after filtering 
 }
 
 void Fragment_assign(

@@ -89,6 +89,9 @@ void import_global(
                 token = strtok(row, ",");       // the first column: key
                 token2 = strtok(NULL, ",\r\n"); // the second column: value
                 // printf("token: %s\n", token);
+                /********
+                 * file paths and file names
+                 * *****/
                 if (strncmp(token, "FP_DAILY", 8) == 0)
                 {
                     strcpy(p_gp->FP_DAILY, token2);
@@ -105,13 +108,37 @@ void import_global(
                 {
                     strcpy(p_gp->FP_HOURLY, token2);
                 }
+                else if (strncmp(token, "FP_OUT", 6) == 0)
+                {
+                    strcpy(p_gp->FP_OUT, token2);
+                }
+                else if (strncmp(token, "FP_LOG", 6) == 0)
+                {
+                    strcpy(p_gp->FP_LOG, token2);
+                }
                 else if (strncmp(token, "FP_SSIM", 7) == 0)
                 {
                     strcpy(p_gp->FP_SSIM, token2);
                 }
+                /***********
+                 * multi-site:
+                 * number of stations or sites
+                 * ********/
+                else if (strncmp(token, "N_STATION", 9) == 0)
+                {
+                    p_gp->N_STATION = atoi(token2);
+                }
+                /***********
+                 * kNN_MOF parameters:
+                 * condition on: cp, or seasonality
+                 * ********/
                 else if (strncmp(token, "SEASON", 6) == 0)
                 {
                     strcpy(p_gp->SEASON, token2);
+                }
+                else if (strncmp(token, "MONTH", 5) == 0)
+                {
+                    strcpy(p_gp->MONTH, token2);
                 }
                 else if (strncmp(token, "SUMMER_FROM", 11) == 0)
                 {
@@ -125,26 +152,17 @@ void import_global(
                 {
                     strcpy(p_gp->T_CP, token2);
                 }
-                else if (strncmp(token, "N_STATION", 9) == 0)
-                {
-                    p_gp->N_STATION = atoi(token2);
-                }
                 else if (strncmp(token, "WD", 2) == 0)
                 {
                     p_gp->WD = atoi(token2);
-                }
-                else if (strncmp(token, "FP_OUT", 6) == 0)
-                {
-                    strcpy(p_gp->FP_OUT, token2);
-                }
-                else if (strncmp(token, "FP_LOG", 6) == 0)
-                {
-                    strcpy(p_gp->FP_LOG, token2);
                 }
                 else if (strncmp(token, "CONTINUITY", 10) == 0)
                 {
                     p_gp->CONTINUITY = atoi(token2);
                 }
+                /**********
+                 * SSIM parameters
+                 * *******/
                 else if (strncmp(token, "SSIM_K", 6) == 0)
                 {
                     // printf("%s\n", token2);
@@ -415,11 +433,24 @@ void Write_df_rr_h(
     int j, h;
     for (h = 0; h < 24; h++)
     {
-        fprintf(
-            p_FP_OUT,
-            "%d,%d,%d,%d,%d,%.2f", run,
-            p_out->date.y, p_out->date.m, p_out->date.d, h,
-            p_out->rr_h[0][h]); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
+        if (p_gp->RUN == 1)
+        {
+            // only one run (simulation)
+            fprintf(
+                p_FP_OUT,
+                "%d,%d,%d,%d,%.2f",
+                p_out->date.y, p_out->date.m, p_out->date.d, h,
+                p_out->rr_h[0][h]); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
+        }
+        else if (p_gp->RUN > 1)
+        {
+            // multiple simulations (realizations)
+            fprintf(
+                p_FP_OUT,
+                "%d,%d,%d,%d,%d,%.2f", run,
+                p_out->date.y, p_out->date.m, p_out->date.d, h,
+                p_out->rr_h[0][h]); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
+        }
 
         for (j = 1; j < p_gp->N_STATION; j++)
         {
