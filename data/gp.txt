@@ -8,7 +8,7 @@
 FP_COOR,D:/kNN_MOF_SSIM/data/Rainsite_COOR.csv
 
 # the file path and name of daily rr data to be disaggregated
-FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily.csv
+FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily_1.csv
 
 # the file path and name of the circulation pattern classification data
 FP_CP,D:/kNN_MOF_SSIM/data/cp_series.csv
@@ -34,13 +34,15 @@ N_STATION,134
 # otherwise, on seasonality (12 months)
 T_CP,FALSE
 
-# SEASON, SUMMER_FROM, and SUMMER_TO: only valid when T_CP == TRUE; 
-# SEASON == TRUE, meaning that the disaggregation is conditioned both
-# on cp and seasonality (here only two seasons: summer and winter)
+# MONTH == TRUE, the disaggregation is conditioned on 12 months, and T_CP should be set as FALSE. 
+MONTH,FALSE
+
+# SEASON, SUMMER_FROM, and SUMMER_TO: only valid when MONTH == FALSE; 
+# SEASON == TRUE, meaning that the disaggregation is also conditioned on two seasons: summer and winter 
 
 SEASON,TRUE
 
-
+# Two arguments to define the two seasons 
 # summer: from May to October (5-10)
 # winter: from November to next April (11-4)
 
