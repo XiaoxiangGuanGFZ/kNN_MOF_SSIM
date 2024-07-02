@@ -5,11 +5,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
+#include <time.h>
 #include "def_struct.h"
 #include "Func_kNN.h"
 #include "Func_SSIM.h"
 #include "Func_Disaggregate.h"
 #include "Func_dataIO.h"
+
 
 void similarity_sorting(
     double *similarity,
@@ -146,6 +148,7 @@ void kNN_sampling(
 
 double get_random()
 {
+    // seed_random();
     return ((double)rand() / (double)RAND_MAX);
 }
 

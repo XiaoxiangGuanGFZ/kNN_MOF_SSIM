@@ -14,6 +14,7 @@ set(SOURCE_FILES
     Func_kNN.c
     Func_fragments.c
     Func_Prepro.c
+    Func_recursive.c
 )
 
 # Add the executable target

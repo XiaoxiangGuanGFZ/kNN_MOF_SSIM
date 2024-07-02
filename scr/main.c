@@ -11,6 +11,7 @@
 #include "Func_kNN.h"
 #include "Func_Disaggregate.h"
 #include "Func_Prepro.h"
+#include "Func_recursive.h"
 
 /****** exit description *****
  * void exit(int status);
@@ -192,25 +193,19 @@ int main(int argc, char * argv[]) {
         df_rr_hourly[ndays_h-1].date.y, df_rr_hourly[ndays_h-1].date.m, df_rr_hourly[ndays_h-1].date.d
     );
     view_class_rrh(df_rr_hourly, ndays_h);
-    /****** maxima of rainfall value (L value in SSIM algorithm) *******/
-    // initialize_L(df_rr_hourly, df_rr_daily, p_gp, nrow_rr_d, ndays_h);
 
     /****** rainfall data preprocessing: normalization / standardization *******/
-    Standardize_rain(
+    Normalize_rain(
         p_gp,
         df_rr_daily,
         df_rr_hourly,
         nrow_rr_d,
         ndays_h);
-    // for (size_t i = 0; i < p_gp->N_STATION; i++)
-    // {
-    //     printf("%f,", df_rr_daily->p_rr_pre[i]);
-    // }
-    // exit(3);
+        
     time(&tm);
     printf("------ Rainfall data preprocessing (Done): %s", ctime(&tm));
     fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
-
+    
     /****** Disaggregation: kNN_MOF_cp *******/
     if (p_gp->flag_SSIM == 1)
     {
@@ -223,7 +218,7 @@ int main(int argc, char * argv[]) {
     }
 
     printf("------ Disaggregating: ... \n");
-    kNN_MOF_SSIM(
+    kNN_MOF_SSIM_Recursive(
         df_rr_hourly,
         df_rr_daily,
         df_cps,
@@ -232,6 +227,15 @@ int main(int argc, char * argv[]) {
         nrow_rr_d,
         ndays_h,
         nrow_cp);
+    // kNN_MOF_SSIM(
+    //     df_rr_hourly,
+    //     df_rr_daily,
+    //     df_cps,
+    //     p_gp,
+    //     p_coor,
+    //     nrow_rr_d,
+    //     ndays_h,
+    //     nrow_cp);
     fclose(p_SSIM);
     time(&tm);
     printf("------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
