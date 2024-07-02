@@ -129,6 +129,12 @@ int Filter_WD_Class(
     int pool_cans[]
 )
 {
+    /**************************
+     * filter the candidate pools based on the following criteria:
+     * - class: either cp type or seasonality(12 months or 2 seasons)
+     * - continuity: the wet-dry status before and after the target and candidate day
+     * PS: in SSIM calculation, empty map could bring error or bias
+     * ***********************/
     int index = 0;
     int skip = 0;
     skip = (int)((p_gp->CONTINUITY - 1) / 2);

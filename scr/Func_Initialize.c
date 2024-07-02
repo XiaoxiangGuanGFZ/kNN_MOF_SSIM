@@ -114,7 +114,7 @@ void initialize_dfrr_d(
      * - season and cp
      * - cp alone
      * - nothing
-     * ****/
+     * ***************/
     if (N_CP_CLASS > 0 && N_SM_CLASS > 0)
     {
         for (size_t i = 0; i < nrow_rr_d; i++)
