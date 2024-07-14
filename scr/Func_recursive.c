@@ -35,7 +35,7 @@
 #include "Func_dataIO.h"
 #include "Func_kNN.h"
 #include "Func_Fragments.h"
-#include "Func_recursive.h"
+#include "Func_Recursive.h"
 
 void kNN_MOF_SSIM_Recursive(
     struct df_rr_h *p_rrh,

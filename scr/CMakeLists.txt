@@ -12,9 +12,9 @@ set(SOURCE_FILES
     Func_SSIM.c
     Func_Disaggregate.c
     Func_kNN.c
-    Func_fragments.c
+    Func_Fragments.c
     Func_Prepro.c
-    Func_recursive.c
+    Func_Recursive.c
 )
 
 # Add the executable target

@@ -11,7 +11,7 @@
 #include "Func_kNN.h"
 #include "Func_Disaggregate.h"
 #include "Func_Prepro.h"
-#include "Func_recursive.h"
+#include "Func_Recursive.h"
 
 /****** exit description *****
  * void exit(int status);
