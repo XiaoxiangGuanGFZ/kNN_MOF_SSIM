@@ -19,4 +19,9 @@
 * areal scale: aggregtaed to areal average rainfall 
 * WEI scale: spatially and temporally integrated index
 
+## to-do list (ideas)
+
+use SSIM as the similarity metric to select the candidate recursivey until
+all the rainy (wet) sites are disaggregated.
+
 

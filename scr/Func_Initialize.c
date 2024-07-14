@@ -26,6 +26,7 @@
 #include <math.h>
 #include "def_struct.h"
 #include "Func_Initialize.h"
+#include "Func_Fragments.h"  // the wet-dry function
 
 void initialize_dfrr_d(
     struct Para_global *p_gp,
@@ -306,6 +307,34 @@ int CP_classes(
     return cp_max;
 }
 
+/**********************
+ * initialize the wet-dry station for
+ * both daily and hourly records
+ * ********************/
+
+void initialize_dfrr_wd(
+    struct Para_global *p_gp,
+    struct df_rr_d *p_rr_d,
+    struct df_rr_h *p_rr_h,
+    int ndays_d,
+    int ndays_h
+)
+{
+    /*****
+     * wet: 1
+     * dry: 0
+     * ***/
+    int i;
+    for (i = 0; i < ndays_d; i++)
+    {
+        (p_rr_d + i)->wd = Toggle_WD(p_gp->N_STATION, (p_rr_d + i)->p_rr);
+    }
+    for (i = 0; i < ndays_h; i++)
+    {
+        (p_rr_h + i)->wd = Toggle_WD(p_gp->N_STATION, (p_rr_h + i)->rr_d);
+    }
+    
+}
 
 /**********************
  * view_class:

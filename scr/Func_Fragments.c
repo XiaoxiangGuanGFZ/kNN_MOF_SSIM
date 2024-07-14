@@ -18,7 +18,7 @@ int Toggle_WD(
     int WD = 0;
     for (size_t i = 0; i < N_STATION; i++)
     {
-        if (*(p_rr_d + i) > FloatZero)
+        if (*(p_rr_d + i) > 0.0)
         {
             WD = 1;
             break;
@@ -50,7 +50,14 @@ int Toggle_CONTINUITY(
     int skip, match;                          // match: whether wet-dry status match; 1: match; 0: not match
     int n_cans = 0;                           // number of candidates fullfilling the CONTINUITY criteria (output)
     skip = (int)((p_gp->CONTINUITY - 1) / 2); // p_gp->CONTINUITY == 1: skip=0; p_gp->CONTINUITY == 3: skip=1
-    if (p_gp->WD == 1)
+    int WD;
+    /*****
+     * WD:
+     * - 1: flexiable
+     * - 0: strict, perfect match in wet-dry status
+     * - -1: no requirement, as long as the candidate day is also wet
+     * ***/
+    if (WD == 1)
     {
         for (int k = skip; k < ndays_h - skip; k++)
         {
@@ -73,7 +80,7 @@ int Toggle_CONTINUITY(
             }
         }
     }
-    else if (p_gp->WD == 0)
+    else if (WD == 0)
     {
         // strict; wet == wet or dry == dry for each site
         for (int k = skip; k < ndays_h - skip; k++)
@@ -99,7 +106,7 @@ int Toggle_CONTINUITY(
             }
         }
     }
-    else if (p_gp->WD == -1)
+    else if (WD == -1)
     {
         /********
          * as long as it is a wet day; don't care the wet-dry match 
@@ -116,16 +123,93 @@ int Toggle_CONTINUITY(
     return n_cans;
 }
 
+int Filter_WD_multisite(
+    struct df_rr_h *p_rrh,
+    double *p_rr_t,
+    int N_STATION,
+    int n_can,
+    int pool_cans[],
+    int pool_cans_final[],
+    int WD
+)
+{
+    /*****
+     * WD:
+     * - 1: flexiable
+     * - 0: strict, perfect match in wet-dry status
+     * - -1: no requirement, as long as the candidate day is also wet
+     * ***/
+    int match = 0;
+    int index = 0;
+    if (WD == 1)
+    {
+        for (int k = 0; k < n_can; k++)
+        {
+            // iterate each day in hourly observations
+            match = 1;
+            for (int s = 0; s < N_STATION; s++)
+            {
+                /* flexible wet-dry status matching*/
+                if (*(p_rr_t + s) > 0 && (p_rrh + pool_cans[k])->rr_d[s] <= 0)
+                {
+                    match = 0;
+                    break;
+                }
+            }
+
+            if (match == 1)
+            {
+                *(pool_cans_final + index) = pool_cans[k];
+                index++;
+            }
+        }
+    }
+    else if (WD == 0)
+    {
+        // strict; wet == wet or dry == dry for each site
+        for (int k = 0; k < n_can; k++)
+        {
+            // iterate each day in hourly observations
+            match = 1;
+            for (int s = 0; s < N_STATION; s++)
+            {
+                if (
+                    (*(p_rr_t + s) > 0 && (p_rrh + pool_cans[k])->rr_d[s] <= 0) || 
+                    (*(p_rr_t + s) <= 0 && (p_rrh + pool_cans[k])->rr_d[s] > 0)
+                    )
+                {
+                    match = 0;
+                    break;
+                }
+            }
+
+            if (match == 1)
+            {
+                *(pool_cans_final + index) = pool_cans[k];
+                index++;
+            }
+        }
+    }
+    else if (WD == -1)
+    {
+        /********
+         * as long as it is a wet day; don't care the wet-dry match 
+         * ****/
+        index = n_can;
+        for (int k = 0; k < n_can; k++)
+        {
+            *(pool_cans_final + k) = pool_cans[k];
+        }
+    }
+    return index;
+}
+
 
 int Filter_WD_Class(
     struct df_rr_h *p_rrh,
     struct df_rr_d *p_rrd,
-    struct Para_global *p_gp,
     int id_target,
-    int CLASS_target,
     int ndays_h,
-    int nrow_rr_d,
-    int n_can,
     int pool_cans[]
 )
 {
@@ -136,10 +220,12 @@ int Filter_WD_Class(
      * PS: in SSIM calculation, empty map could bring error or bias
      * ***********************/
     int index = 0;
-    int skip = 0;
-    skip = (int)((p_gp->CONTINUITY - 1) / 2);
-    int CLASS_candidate;
-    for (size_t i = 0; i < n_can; i++)
+    int CLASS_candidate, CLASS_target;
+    int wd_target, wd_candidate;
+    CLASS_target = (p_rrd + id_target)->class;
+    wd_target = (p_rrd + id_target)->wd;
+    
+    for (size_t i = 0; i < ndays_h; i++)
     {
         /*********
          * criteria:
@@ -147,27 +233,12 @@ int Filter_WD_Class(
          * - the days before and after the target day exist, if CONTUNITY > 1
          * - wet-dry status of the days before and after the target day should be identical to those of the candidate
          * ******/
-        CLASS_candidate = (p_rrh + pool_cans[i])->class; // the class of the candidate day
-        if (CLASS_candidate == CLASS_target) 
+        CLASS_candidate = (p_rrh + i)->class; // the class of the candidate day
+        wd_candidate = (p_rrh + i)->wd;
+        if (CLASS_candidate == CLASS_target && wd_candidate == wd_target) 
         {
-            int test = 1;
-            if (skip > 0 && id_target >= skip && id_target < nrow_rr_d - skip)
-            {
-                for (int s = 0 - skip; s < 1 + skip; s++)
-                {
-                    if (
-                        Toggle_WD(p_gp->N_STATION, (p_rrh + pool_cans[i] + s)->rr_d) != Toggle_WD(p_gp->N_STATION, (p_rrd + id_target + s)->p_rr))
-                    {
-                        test = 0;
-                        break;
-                    }
-                }
-            }
-            if (test == 1)
-            {
-                pool_cans[index] = pool_cans[i];
-                index += 1;
-            }
+            pool_cans[index] = i;
+            index += 1;
         }
     }
     return(index);  // the number of candidates after filtering 
@@ -250,5 +321,27 @@ void Fragment_assign(
                 p_out->rr_h[j][h] = 0.0;
             }
         }
+    }
+}
+
+void View_df_h(
+    struct df_rr_h *p_out,
+    int N_STATION
+)
+{
+    printf("daily: \n");
+    for (size_t i = 0; i < N_STATION; i++)
+    {
+        printf("%.1f,", *(p_out->rr_d + i));
+    }
+    printf("\nhourly: \n");
+
+    for (size_t h = 0; h < 24; h++)
+    {
+        for (size_t i = 0; i < N_STATION; i++)
+        {
+            printf("%.1f,", p_out->rr_h[i][h]);
+        }
+        printf("\n");
     }
 }

@@ -436,29 +436,19 @@ void Write_df_rr_h(
         if (p_gp->RUN == 1)
         {
             // only one run (simulation)
-            fprintf(
-                p_FP_OUT,
-                "%d,%d,%d,%d,%.2f",
-                p_out->date.y, p_out->date.m, p_out->date.d, h,
-                p_out->rr_h[0][h]); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
+            fprintf(p_FP_OUT, "%d,%d,%d,%d", p_out->date.y, p_out->date.m, p_out->date.d, h);
+            // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
         }
         else if (p_gp->RUN > 1)
         {
             // multiple simulations (realizations)
-            fprintf(
-                p_FP_OUT,
-                "%d,%d,%d,%d,%d,%.2f", run,
-                p_out->date.y, p_out->date.m, p_out->date.d, h,
-                p_out->rr_h[0][h]); // print the date and time (y, m, d, h), together with the value from first rr gauge (0)
+            fprintf(p_FP_OUT, "%d,%d,%d,%d,%d", run, p_out->date.y, p_out->date.m, p_out->date.d, h);
         }
 
-        for (j = 1; j < p_gp->N_STATION; j++)
+        for (j = 0; j < p_gp->N_STATION; j++)
         {
-            fprintf(
-                p_FP_OUT,
-                ",%.2f", p_out->rr_h[j][h]);
+            fprintf(p_FP_OUT, ",%.2f", p_out->rr_h[j][h]);
         }
         fprintf(p_FP_OUT, "\n"); // print "\n" (newline) after one row
     }
-    // printf("%d-%d-%d: Done\n", p_out->date.y, p_out->date.m, p_out->date.d); // print to screen (command line)
 }

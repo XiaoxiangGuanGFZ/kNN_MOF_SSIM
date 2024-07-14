@@ -21,7 +21,9 @@ void kNN_SSIM_sampling_recursive(
     int index_target,
     int pool_cans[],
     int n_can,
-    int skip
+    // int skip,
+    int *WD,
+    int *depth
 );
 
 
@@ -40,5 +42,5 @@ void Fragment_assign_recursive(
     int index_target,
     int fragment);
     
-
 #endif
+

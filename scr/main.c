@@ -132,16 +132,8 @@ int main(int argc, char * argv[]) {
     
     static struct df_rr_d df_rr_daily[MAXrow];
     int nrow_rr_d;
-    nrow_rr_d = import_dfrr_d(
-        Para_df.FP_DAILY,
-        Para_df.N_STATION,
-        df_rr_daily);
-    initialize_dfrr_d(
-        p_gp,
-        df_rr_daily,
-        df_cps,
-        nrow_rr_d,
-        nrow_cp);
+    nrow_rr_d = import_dfrr_d(Para_df.FP_DAILY, Para_df.N_STATION, df_rr_daily);
+    initialize_dfrr_d(p_gp, df_rr_daily, df_cps, nrow_rr_d, nrow_cp);
 
     time(&tm);
     printf("------ Import daily rainfall data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rainfall data (Done): %s", ctime(&tm));
@@ -168,12 +160,7 @@ int main(int argc, char * argv[]) {
     int ndays_h;
     static struct df_rr_h df_rr_hourly[MAXrow];
     ndays_h = import_dfrr_h(Para_df.FP_HOURLY, Para_df.N_STATION, df_rr_hourly);
-    initialize_dfrr_h(
-        p_gp,
-        df_rr_hourly,
-        df_cps,
-        ndays_h,
-        nrow_cp);
+    initialize_dfrr_h(p_gp, df_rr_hourly, df_cps, ndays_h, nrow_cp);
     
     time(&tm);
     printf("------ Import hourly rainfall data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import hourly rainfall data (Done): %s", ctime(&tm));
@@ -194,14 +181,11 @@ int main(int argc, char * argv[]) {
     );
     view_class_rrh(df_rr_hourly, ndays_h);
 
+    /****** rainfall data preprocessing: wet-dry status initialization *******/
+    initialize_dfrr_wd(p_gp, df_rr_daily, df_rr_hourly, nrow_rr_d, ndays_h);
     /****** rainfall data preprocessing: normalization / standardization *******/
-    Normalize_rain(
-        p_gp,
-        df_rr_daily,
-        df_rr_hourly,
-        nrow_rr_d,
-        ndays_h);
-        
+    Normalize_rain(p_gp, df_rr_daily, df_rr_hourly, nrow_rr_d, ndays_h);
+    
     time(&tm);
     printf("------ Rainfall data preprocessing (Done): %s", ctime(&tm));
     fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));

@@ -8,10 +8,10 @@
 FP_COOR,D:/kNN_MOF_SSIM/data/Rainsite_COOR.csv
 
 # the file path and name of daily rr data to be disaggregated
-FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily_1.csv
+FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily.csv
 
 # the file path and name of the circulation pattern classification data
-FP_CP,D:/kNN_MOF_SSIM/data/cp_series.csv
+FP_CP,D:/kNN_MOF_SSIM/data/cp.csv
 
 # the file path and name of the observed hourly rainfall data
 FP_HOURLY,D:/kNN_MOF_SSIM/data/rr_obs_hourly.csv

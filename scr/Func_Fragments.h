@@ -16,15 +16,21 @@ int Toggle_CONTINUITY(
     int pool_cans[]
 );
 
+int Filter_WD_multisite(
+    struct df_rr_h *p_rrh,
+    double *p_rr_t,
+    int N_STATION,
+    int n_can,
+    int pool_cans[],
+    int pool_cans_final[],
+    int WD
+);
+
 int Filter_WD_Class(
     struct df_rr_h *p_rrh,
     struct df_rr_d *p_rrd,
-    struct Para_global *p_gp,
     int id_target,
-    int CLASS_target,
     int ndays_h,
-    int nrow_rr_d,
-    int n_can,
     int pool_cans[]
 );
 
@@ -35,6 +41,11 @@ void Fragment_assign(
     struct Para_global *p_gp,
     struct df_coor *p_coor,
     int fragment
+);
+
+void View_df_h(
+    struct df_rr_h *p_out,
+    int N_STATION
 );
 
 

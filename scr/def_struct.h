@@ -24,9 +24,10 @@ struct df_rr_d
     struct Date date;    
     double *p_rr;
     double *p_rr_pre;
-    int cp;
-    int SM;
-    int class;
+    int wd;  // wet or dry
+    int cp;  // the circulation pattern type / class
+    int SM;  // the seasonality
+    int class; // combination of co and SM
 };
 
 struct df_coor
@@ -51,6 +52,7 @@ struct df_rr_h
     double (*rr_h)[24];
     double *rr_d;
     double *rr_d_pre;
+    int wd;  // wet or dry
     int cp;
     int SM;
     int class;

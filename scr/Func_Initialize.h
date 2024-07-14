@@ -30,6 +30,14 @@ int CP_classes(
     int nrow_cp
 );
 
+void initialize_dfrr_wd(
+    struct Para_global *p_gp,
+    struct df_rr_d *p_rr_d,
+    struct df_rr_h *p_rr_h,
+    int ndays_d,
+    int ndays_h
+);
+
 // void initialize_L(
 //     struct df_rr_h *p_rrh,
 //     struct df_rr_d *p_rrd,
