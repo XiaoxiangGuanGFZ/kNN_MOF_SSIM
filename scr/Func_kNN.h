@@ -29,6 +29,7 @@ void kNN_sampling(
 
 
 double get_random();
+void seed_random();
 
 int weight_cdf_sample(
     int size_pool,

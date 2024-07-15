@@ -61,6 +61,8 @@ void kNN_MOF_SSIM_Recursive(
 
     struct df_rr_h df_rr_h_out; // this is a struct variable, not a struct array;
     df_rr_h_out.rr_h = calloc(p_gp->N_STATION, sizeof(double) * 24); // allocate memory (stack);
+    df_rr_h_out.rr_d = calloc(p_gp->N_STATION, sizeof(double));
+    df_rr_h_out.rr_d_pre = calloc(p_gp->N_STATION, sizeof(double));
 
     /************
      * CONTINUITY and skip
@@ -81,26 +83,21 @@ void kNN_MOF_SSIM_Recursive(
         printf("Program terminated: cannot create or open output file\n");
         exit(1);
     }
-    for (i = 0; i < nrow_rr_d; i++)
+    for (i = 0; i < nrow_rr_d; i++) // iterate each target day
     {
         WD = p_gp->WD;
-        // iterate each target day
-        Initialize_output(&df_rr_h_out, p_gp, p_rrd, i);
-        // View_df_h(&df_rr_h_out, p_gp->N_STATION);
-        // printf("%d-%02d-%02d: disagg\n", df_rr_h_out.date.y, df_rr_h_out.date.m, df_rr_h_out.date.d);
-        // printf("rr: %f,%f,%f,%f\n", df_rr_h_out.rr_d[0], df_rr_h_out.rr_d[1], df_rr_h_out.rr_d[2], df_rr_h_out.rr_d[3]);
         Toggle_wd = 0;                                                   // initialize with 0 (non-rainy)
         Toggle_wd = Toggle_WD(p_gp->N_STATION, (p_rrd + i)->p_rr);
         if (Toggle_wd == 0)
         {
             // this is a non-rainy day; all 0.0
             n_can = -1;
+            Initialize_output(&df_rr_h_out, p_gp, p_rrd, i); // View_df_h(&df_rr_h_out, p_gp->N_STATION);
             for (size_t t = 0; t < p_gp->RUN; t++)
             {
                 /* write the disaggregation output */
                 Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t + 1);
             }
-            // Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, 1);
         }
         else
         {
@@ -115,9 +112,10 @@ void kNN_MOF_SSIM_Recursive(
             for (int t = 0; t < p_gp->RUN; t++)
             {
                 int depth = 0;
+                seed_random();
+                Initialize_output(&df_rr_h_out, p_gp, p_rrd, i); // View_df_h(&df_rr_h_out, p_gp->N_STATION);
                 kNN_SSIM_sampling_recursive(p_rrd, p_rrh, p_gp, &df_rr_h_out,
                                             i, pool_cans, n_can, &WD, &depth);
-                // View_df_h(&df_rr_h_out, p_gp->N_STATION);
                 Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t + 1); /* write the disaggregation output */
             }
         }
@@ -135,7 +133,6 @@ void kNN_SSIM_sampling_recursive(
     int index_target,
     int pool_cans[],
     int n_can,
-    // int skip,
     int *WD,
     int *depth
 )
@@ -171,18 +168,18 @@ void kNN_SSIM_sampling_recursive(
     n_can_final = Filter_WD_multisite(p_rrh, p_out->rr_d, p_gp->N_STATION, n_can, pool_cans, pool_cans_final, *WD);
     // printf("n_can_final: %d\n", n_can_final);
     int i; 
-    double *SSIM;    // the SSIM between target day and candidate days
+    double *SSIM; 
     SSIM = (double *)malloc(n_can_final * sizeof(double));
     /** compute mean-SSIM between target and candidate images **/
     for (i = 0; i < n_can_final; i++)
     {
         *(SSIM + i) = meanSSIM(
-            (p_rrd + index_target)->p_rr_pre,
+            p_out->rr_d_pre,
             (p_rrh + pool_cans_final[i])->rr_d_pre,
             p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
     }
-    int order = 1; // larger SSIM, heavier weight
-    int run = 1;
+    int order = 1; // 1: larger SSIM, heavier weight; 0: larger distance, less weight
+    int run = 1;   // sample one candidate each time
     int index_fragment;
     kNN_sampling(SSIM, pool_cans_final, order, n_can_final, run, &index_fragment);
     
@@ -205,13 +202,15 @@ void Initialize_output(
 )
 {
     p_out->date = (p_rrd + index_target)->date;
-    p_out->rr_d = (p_rrd + index_target)->p_rr;
-    /*******************
-     * initialize the output (hourly) data,
-     * preset as 0.0 
-     * *****************/
     for (int j = 0; j < p_gp->N_STATION; j++)
     {
+        *(p_out->rr_d + j) = *((p_rrd + index_target)->p_rr + j);
+        *(p_out->rr_d_pre + j) = *((p_rrd + index_target)->p_rr_pre + j);
+
+        /*******************
+         * initialize the output (hourly) data,
+         * preset as 0.0
+         * *****************/
         for (int h = 0; h < 24; h++)
         {
             p_out->rr_h[j][h] = 0.0;
@@ -254,8 +253,7 @@ void Fragment_assign_recursive(
                  * should be updated
                  * **********/
                 p_out->rr_d[j] = 0.0;
-                (p_rrd + index_target)->p_rr[j] = 0.0;
-                (p_rrd + index_target)->p_rr_pre[j] = 0.0;
+                p_out->rr_d_pre[j] = 0.0;
             }
         }
     }

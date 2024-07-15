@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
+#include <sys/time.h>
 #include <time.h>
 #include "def_struct.h"
 #include "Func_kNN.h"
@@ -148,8 +149,9 @@ void kNN_sampling(
 
 double get_random()
 {
-    // seed_random();
-    return ((double)rand() / (double)RAND_MAX);
+    int random_number = rand();
+    // printf("Random number: %d\n", random_number);
+    return ((double)random_number / (double)RAND_MAX);
 }
 
 int weight_cdf_sample(
@@ -179,4 +181,12 @@ int weight_cdf_sample(
         }
     }
     return index_out;
+}
+
+void seed_random() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    unsigned int seed = (unsigned int)(tv.tv_sec * 1000000 + tv.tv_usec);
+    srand(seed);  // Use both seconds and microseconds for seed
+    // printf("Seed: %u\n", seed);  // Debug statement to print the seed
 }
