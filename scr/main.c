@@ -12,22 +12,23 @@
 #include "Func_Disaggregate.h"
 #include "Func_Prepro.h"
 #include "Func_Recursive.h"
+#include "Func_Print.h"
 
 /****** exit description *****
  * void exit(int status);
  * from <stdlib.h>
- *  The exit() function takes a single argument, status, 
- * which is an integer value. This status code is 
- * returned to the parent process or the operating system. 
- * By convention, a status code of 0 usually indicates successful execution, 
- * and any other non-zero value typically indicates 
+ *  The exit() function takes a single argument, status,
+ * which is an integer value. This status code is
+ * returned to the parent process or the operating system.
+ * By convention, a status code of 0 usually indicates successful execution,
+ * and any other non-zero value typically indicates
  * an error or abnormal termination.
  * --------
  * 0: successfuly execution
  * 1: file input or output error
  * 2: algorithm error
- *  
-*/
+ *
+ *****************************/
 
 FILE *p_SSIM;
 FILE *p_log;  // file pointer pointing to log file
@@ -60,36 +61,7 @@ int main(int argc, char * argv[]) {
         printf("cannot create / open log file\n");
         exit(1);
     }
-    printf("------ Global parameter import completed: %s", ctime(&tm));
-    fprintf(p_log, "------ Global parameter import completed: %s", ctime(&tm));
-
-    printf(
-        "FP_DAILY: %s\nFP_HOULY: %s\nFP_CP:    %s\nFP_OUT:   %s\nFP_LOG:   %s\n",
-        p_gp->FP_DAILY, p_gp->FP_HOURLY, p_gp->FP_CP, p_gp->FP_OUT, p_gp->FP_LOG
-    );
-    fprintf(p_log, "FP_DAILY: %s\nFP_HOULY: %s\nFP_CP:    %s\nFP_OUT:   %s\nFP_LOG:   %s\n",
-        p_gp->FP_DAILY, p_gp->FP_HOURLY, p_gp->FP_CP, p_gp->FP_OUT, p_gp->FP_LOG);
-
-    printf(
-        "------ Disaggregation parameters: -----\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nSEASON: %s\n",
-        p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->SEASON
-    );
-    fprintf(
-        p_log,
-        "------ Disaggregation parameters: -----\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nSEASON: %s\n",
-        p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->SEASON
-    );
-    if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
-    {
-        printf("SUMMER: %d-%d\n", p_gp->SUMMER_FROM, p_gp->SUMMER_TO);
-        fprintf(p_log,"SUMMER: %d-%d\n", p_gp->SUMMER_FROM, p_gp->SUMMER_TO);
-    }
-    printf("SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\nNODATA: %f\n",
-           p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2],
-           p_gp->NODATA);
-    fprintf(p_log, "SSIM_K: %f,%f,%f\nSSIM_power: %f,%f,%f\nNODATA: %f\n",
-            p_gp->k[0], p_gp->k[1], p_gp->k[2], p_gp->power[0], p_gp->power[1], p_gp->power[2],
-            p_gp->NODATA);
+    Print_gp(p_gp);
 
     /******* import circulation pattern series *********/
     
@@ -97,26 +69,19 @@ int main(int argc, char * argv[]) {
     int nrow_cp=0;  // the number of CP data columns: 4 (y, m, d, cp)
     if (strncmp(p_gp->T_CP, "TRUE", 4) == 0) {
         nrow_cp = import_df_cp(Para_df.FP_CP, df_cps);
+        Print_cp(df_cps, nrow_cp);
+    }
+    if (strncmp(p_gp->MONTH, "TRUE", 4) == 0)
+    {
         time(&tm);
-        printf("------ Import CP data series (Done): %s", ctime(&tm)); 
-        fprintf(p_log, "------ Import CP data series (Done): %s", ctime(&tm));
-
-        printf("* number of CP data rows: %d\n", nrow_cp); 
-        fprintf(p_log, "* number of CP data rows: %d\n", nrow_cp);
-
-        printf("* the first day: %d-%02d-%02d \n", df_cps[0].date.y, df_cps[0].date.m, df_cps[0].date.d);
-        fprintf(p_log, "* the first day: %d-%02d-%02d \n", df_cps[0].date.y, df_cps[0].date.m, df_cps[0].date.d);
-        
-        printf("* the last day:  %d-%02d-%02d \n", 
-            df_cps[nrow_cp-1].date.y, df_cps[nrow_cp-1].date.m, df_cps[nrow_cp-1].date.d
-        );
-        fprintf(p_log, "* the last day:  %d-%02d-%02d \n", 
-            df_cps[nrow_cp-1].date.y, df_cps[nrow_cp-1].date.m, df_cps[nrow_cp-1].date.d
-        );
-    } else {
+        printf("------ Disaggregation conditioned on 12 months: %s", ctime(&tm));
+        fprintf(p_log, "------ Disaggregation conditioned on 12 months: %s", ctime(&tm));
+    }
+    else if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
+    {
         time(&tm);
-        printf("------ Disaggregation conditioned only on seasonality (12 months): %s", ctime(&tm));
-        fprintf(p_log, "------ Disaggregation conditioned only on seasonality (12 months): %s", ctime(&tm));
+        printf("------ Disaggregation conditioned on seasonality-summer and winter: %s", ctime(&tm));
+        fprintf(p_log, "------ Disaggregation conditioned on seasonality-summer and winter: %s", ctime(&tm));
     }
 
     /****** import rainsite coor *******/
@@ -134,26 +99,7 @@ int main(int argc, char * argv[]) {
     int nrow_rr_d;
     nrow_rr_d = import_dfrr_d(Para_df.FP_DAILY, Para_df.N_STATION, df_rr_daily);
     initialize_dfrr_d(p_gp, df_rr_daily, df_cps, nrow_rr_d, nrow_cp);
-
-    time(&tm);
-    printf("------ Import daily rainfall data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import daily rainfall data (Done): %s", ctime(&tm));
-    
-    printf("* the total rows: %d\n", nrow_rr_d); fprintf(p_log, "* the total rows: %d\n", nrow_rr_d);
-    
-    printf("* the first day: %d-%02d-%02d\n", df_rr_daily[0].date.y,df_rr_daily[0].date.m,df_rr_daily[0].date.d);
-    fprintf(p_log, "* the first day: %d-%02d-%02d\n", df_rr_daily[0].date.y,df_rr_daily[0].date.m,df_rr_daily[0].date.d);
-
-    printf(
-        "* the last day:  %d-%02d-%02d\n", 
-        df_rr_daily[nrow_rr_d-1].date.y,df_rr_daily[nrow_rr_d-1].date.m,df_rr_daily[nrow_rr_d-1].date.d
-    );
-    fprintf(
-        p_log,
-        "* the last day:  %d-%02d-%02d\n", 
-        df_rr_daily[nrow_rr_d-1].date.y,df_rr_daily[nrow_rr_d-1].date.m,df_rr_daily[nrow_rr_d-1].date.d
-    );
-
-    view_class_rrd(df_rr_daily, nrow_rr_d);
+    Print_dly(df_rr_daily, p_gp, nrow_rr_d);
 
     /****** import hourly rainfall data (obs as fragments) *******/
     
@@ -161,25 +107,7 @@ int main(int argc, char * argv[]) {
     static struct df_rr_h df_rr_hourly[MAXrow];
     ndays_h = import_dfrr_h(Para_df.FP_HOURLY, Para_df.N_STATION, df_rr_hourly);
     initialize_dfrr_h(p_gp, df_rr_hourly, df_cps, ndays_h, nrow_cp);
-    
-    time(&tm);
-    printf("------ Import hourly rainfall data (Done): %s", ctime(&tm)); fprintf(p_log, "------ Import hourly rainfall data (Done): %s", ctime(&tm));
-    
-    printf("* total hourly obs days: %d\n", ndays_h); fprintf(p_log, "* total hourly obs days: %d\n", ndays_h);
-    
-    printf("* the first day: %d-%02d-%02d\n", df_rr_hourly[0].date.y, df_rr_hourly[0].date.m, df_rr_hourly[0].date.d);
-    fprintf(p_log, "* the first day: %d-%02d-%02d\n", df_rr_hourly[0].date.y, df_rr_hourly[0].date.m, df_rr_hourly[0].date.d);
-    
-    printf(
-        "* the last day:  %d-%02d-%02d\n", 
-        df_rr_hourly[ndays_h-1].date.y, df_rr_hourly[ndays_h-1].date.m, df_rr_hourly[ndays_h-1].date.d
-    );
-    fprintf(
-        p_log,
-        "* the last day:  %d-%02d-%02d\n", 
-        df_rr_hourly[ndays_h-1].date.y, df_rr_hourly[ndays_h-1].date.m, df_rr_hourly[ndays_h-1].date.d
-    );
-    view_class_rrh(df_rr_hourly, ndays_h);
+    Print_hly(df_rr_hourly, ndays_h);
 
     /****** rainfall data preprocessing: wet-dry status initialization *******/
     initialize_dfrr_wd(p_gp, df_rr_daily, df_rr_hourly, nrow_rr_d, ndays_h);
