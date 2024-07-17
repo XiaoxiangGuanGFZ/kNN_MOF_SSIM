@@ -27,6 +27,9 @@ FP_LOG,D:/kNN_MOF_SSIM/my.log
 FP_SSIM,D:/kNN_MOF_SSIM/output/SSIM.csv
 
 # ------- the parameters in kNN_MOF_SSIM algorithm ---------
+# preprocessing of the data: none [0], normalization [1] or standardization [2]
+PREPROCESS,0
+
 # number of the rain stations
 N_STATION,134
 
@@ -66,4 +69,4 @@ SSIM_POWER,1,1,1
 
 NODATA,-99
 
-RUN,1
+RUN,3

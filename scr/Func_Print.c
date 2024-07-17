@@ -25,13 +25,13 @@ void Print_gp(
         p_gp->FP_DAILY, p_gp->FP_HOURLY, p_gp->FP_CP, p_gp->FP_OUT, p_gp->FP_LOG);
 
     printf(
-        "------ Disaggregation parameters: -----\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nSEASON: %s\n",
-        p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->SEASON
+        "------ Disaggregation parameters: -----\nPREPROCESS: %d\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nMONTH: %s\nSEASON: %s\n",
+        p_gp->PREPROCESS, p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->MONTH, p_gp->SEASON
     );
     fprintf(
         p_log,
-        "------ Disaggregation parameters: -----\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nSEASON: %s\n",
-        p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->SEASON
+        "------ Disaggregation parameters: -----\nPREPROCESS: %d\nT_CP: %s\nN_STATION: %d\nCONTINUITY: %d\nWD: %d\nMONTH: %s\nSEASON: %s\n",
+        p_gp->PREPROCESS, p_gp->T_CP, p_gp->N_STATION, p_gp->CONTINUITY, p_gp->WD, p_gp->MONTH, p_gp->SEASON
     );
     if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
     {

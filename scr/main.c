@@ -112,11 +112,18 @@ int main(int argc, char * argv[]) {
     /****** rainfall data preprocessing: wet-dry status initialization *******/
     initialize_dfrr_wd(p_gp, df_rr_daily, df_rr_hourly, nrow_rr_d, ndays_h);
     /****** rainfall data preprocessing: normalization / standardization *******/
-    Normalize_rain(p_gp, df_rr_daily, df_rr_hourly, nrow_rr_d, ndays_h);
+    // preprocessing of the data: none [0], normalization [1] or standardization [2]
+    if (p_gp->PREPROCESS != 0)
+    {
+        if (p_gp->PREPROCESS == 1)
+        {
+            Normalize_rain(p_gp, df_rr_daily, df_rr_hourly, nrow_rr_d, ndays_h);
+        }
+        time(&tm);
+        printf("------ Rainfall data preprocessing (Done): %s", ctime(&tm));
+        fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
+    }
     
-    time(&tm);
-    printf("------ Rainfall data preprocessing (Done): %s", ctime(&tm));
-    fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
     
     /****** Disaggregation: kNN_MOF_cp *******/
     if (p_gp->flag_SSIM == 1)

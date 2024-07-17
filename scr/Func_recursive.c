@@ -171,13 +171,26 @@ void kNN_SSIM_sampling_recursive(
     double *SSIM; 
     SSIM = (double *)malloc(n_can_final * sizeof(double));
     /** compute mean-SSIM between target and candidate images **/
-    for (i = 0; i < n_can_final; i++)
+    if (p_gp->PREPROCESS == 1)
     {
-        *(SSIM + i) = meanSSIM(
-            p_out->rr_d_pre,
-            (p_rrh + pool_cans_final[i])->rr_d_pre,
-            p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+        for (i = 0; i < n_can_final; i++)
+        {
+            *(SSIM + i) = meanSSIM(
+                p_out->rr_d_pre,
+                (p_rrh + pool_cans_final[i])->rr_d_pre,
+                p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+        }
+    } else if (p_gp->PREPROCESS == 0)
+    {
+        for (i = 0; i < n_can_final; i++)
+        {
+            *(SSIM + i) = meanSSIM(
+                p_out->rr_d,
+                (p_rrh + pool_cans_final[i])->rr_d,
+                p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+        }
     }
+    
     int order = 1; // 1: larger SSIM, heavier weight; 0: larger distance, less weight
     int run = 1;   // sample one candidate each time
     int index_fragment;
@@ -205,8 +218,10 @@ void Initialize_output(
     for (int j = 0; j < p_gp->N_STATION; j++)
     {
         *(p_out->rr_d + j) = *((p_rrd + index_target)->p_rr + j);
-        *(p_out->rr_d_pre + j) = *((p_rrd + index_target)->p_rr_pre + j);
-
+        if (p_gp->PREPROCESS != 0)
+        {
+            *(p_out->rr_d_pre + j) = *((p_rrd + index_target)->p_rr_pre + j);
+        }
         /*******************
          * initialize the output (hourly) data,
          * preset as 0.0
@@ -253,7 +268,10 @@ void Fragment_assign_recursive(
                  * should be updated
                  * **********/
                 p_out->rr_d[j] = 0.0;
-                p_out->rr_d_pre[j] = 0.0;
+                if (p_gp->PREPROCESS != 0)
+                {
+                    p_out->rr_d_pre[j] = 0.0;
+                }
             }
         }
     }

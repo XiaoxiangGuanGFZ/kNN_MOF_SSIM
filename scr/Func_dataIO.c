@@ -120,6 +120,10 @@ void import_global(
                 {
                     strcpy(p_gp->FP_SSIM, token2);
                 }
+                else if (strncmp(token, "PREPROCESS", 10) == 0)
+                {
+                    p_gp->PREPROCESS = atof(token2);
+                }
                 /***********
                  * multi-site:
                  * number of stations or sites
