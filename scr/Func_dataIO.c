@@ -100,10 +100,10 @@ void import_global(
                 {
                     strcpy(p_gp->FP_CP, token2);
                 }
-                else if (strncmp(token, "FP_COOR", 7) == 0)
-                {
-                    strcpy(p_gp->FP_COOR, token2);
-                }
+                // else if (strncmp(token, "FP_COOR", 7) == 0)
+                // {
+                //     strcpy(p_gp->FP_COOR, token2);
+                // }
                 else if (strncmp(token, "FP_HOURLY", 9) == 0)
                 {
                     strcpy(p_gp->FP_HOURLY, token2);
@@ -123,6 +123,10 @@ void import_global(
                 else if (strncmp(token, "PREPROCESS", 10) == 0)
                 {
                     p_gp->PREPROCESS = atof(token2);
+                }
+                else if (strncmp(token, "SIMI", 4) == 0)
+                {
+                    strcpy(p_gp->SIMILARITY, token2);
                 }
                 /***********
                  * multi-site:
@@ -195,7 +199,7 @@ void import_global(
                 else
                 {
                     printf(
-                        "Error in opening global parameter file: unrecognized parameter field!");
+                        "Error in opening global parameter file: unrecognized parameter field: %s!", token);
                     exit(1);
                 }
             }
@@ -207,6 +211,12 @@ void import_global(
         p_gp->flag_SSIM = 0;
     } else {
         p_gp->flag_SSIM = 1;
+    }
+    if (strncmp(p_gp->FP_LOG, "FALSE", 5) == 0)
+    {
+        p_gp->FLAG_LOG = 0;
+    } else {
+        p_gp->FLAG_LOG = 1;
     }
     
 }

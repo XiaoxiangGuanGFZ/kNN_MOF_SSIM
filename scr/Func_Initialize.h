@@ -2,6 +2,7 @@
 #define Func_Initialize
 
 extern FILE *p_log;  // file pointer pointing to log file
+extern int FLAG_LOG;
 
 void initialize_dfrr_d(
     struct Para_global *p_gp,

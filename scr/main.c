@@ -32,6 +32,7 @@
 
 FILE *p_SSIM;
 FILE *p_log;  // file pointer pointing to log file
+int FLAG_LOG;
 
 /***************************************
  * main function 
@@ -49,20 +50,23 @@ int main(int argc, char * argv[]) {
     struct Para_global Para_df;     // define the global-parameter structure
     struct Para_global *p_gp;      // give a pointer to global_parameter structure
     p_gp = &Para_df;
-    
+
     /******* import the global parameters ***********
     parameter from main() function, pointer array
     argv[0]: pointing to the first string from command line (the executable file)
     argv[1]: pointing to the second string (parameter): file path and name of global parameter file.
     */
     import_global(*(++argv), p_gp);
-    
-    if ((p_log=fopen(p_gp->FP_LOG, "a+")) == NULL) {
-        printf("cannot create / open log file\n");
-        exit(1);
+    FLAG_LOG = p_gp->FLAG_LOG;
+    if (FLAG_LOG == 1)
+    {
+        if ((p_log = fopen(p_gp->FP_LOG, "a+")) == NULL)
+        {
+            printf("cannot create / open log file\n");
+            exit(1);
+        }
     }
     Print_gp(p_gp);
-
     /******* import circulation pattern series *********/
     
     static struct df_cp df_cps[MAXrow];
@@ -75,23 +79,28 @@ int main(int argc, char * argv[]) {
     {
         time(&tm);
         printf("------ Disaggregation conditioned on 12 months: %s", ctime(&tm));
-        fprintf(p_log, "------ Disaggregation conditioned on 12 months: %s", ctime(&tm));
+        if (FLAG_LOG == 1)
+        {
+            fprintf(p_log, "------ Disaggregation conditioned on 12 months: %s", ctime(&tm));/* code */
+        }
     }
     else if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
     {
-        time(&tm);
-        printf("------ Disaggregation conditioned on seasonality-summer and winter: %s", ctime(&tm));
-        fprintf(p_log, "------ Disaggregation conditioned on seasonality-summer and winter: %s", ctime(&tm));
+        printf("------ Disaggregation conditioned on seasonality-summer and winter\n");
+        if (FLAG_LOG == 1)
+        {
+            fprintf(p_log, "------ Disaggregation conditioned on seasonality-summer and winter\n");
+        }
     }
 
     /****** import rainsite coor *******/
-    struct df_coor *p_coor;
-    int nrow_coor;
-    p_coor = (struct df_coor *)malloc(sizeof(struct df_coor) * p_gp->N_STATION * 2);
-    nrow_coor = import_df_coor(p_gp->FP_COOR, p_coor);
-    initialize_df_coor(p_gp, &p_coor, nrow_coor);
-    time(&tm); printf("------ Import rainsite coor (Done): %s", ctime(&tm)); 
-    fprintf(p_log, "------ Import rainsite coor (Done): %s", ctime(&tm));
+    // struct df_coor *p_coor;
+    // int nrow_coor;
+    // p_coor = (struct df_coor *)malloc(sizeof(struct df_coor) * p_gp->N_STATION * 2);
+    // nrow_coor = import_df_coor(p_gp->FP_COOR, p_coor);
+    // initialize_df_coor(p_gp, &p_coor, nrow_coor);
+    // time(&tm); printf("------ Import rainsite coor (Done): %s", ctime(&tm)); 
+    // fprintf(p_log, "------ Import rainsite coor (Done): %s", ctime(&tm));
 
     /****** import daily rainfall data (to be disaggregated) *******/
     
@@ -121,19 +130,24 @@ int main(int argc, char * argv[]) {
         }
         time(&tm);
         printf("------ Rainfall data preprocessing (Done): %s", ctime(&tm));
-        fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
+        if (FLAG_LOG == 1)
+        {
+            fprintf(p_log, "------ Rainfall data preprocessing (Done): %s", ctime(&tm));
+        }
     }
     
-    
     /****** Disaggregation: kNN_MOF_cp *******/
-    if (p_gp->flag_SSIM == 1)
+    if (p_gp->flag_SSIM == 1)  // if (strncmp(p_gp->FP_SSIM, "FALSE", 5) == 0)
     {
         if ((p_SSIM = fopen(p_gp->FP_SSIM, "w")) == NULL)
         {
             printf("Cannot create / open SSIM file: %s\n", p_gp->FP_SSIM);
             exit(1);
         }
-        fprintf(p_SSIM, "target,ID,index_Frag,SSIM,candidate\n");
+        if (FLAG_LOG == 1)
+        {
+            fprintf(p_SSIM, "target,ID,index_Frag,SSIM,candidate\n");
+        }
     }
 
     printf("------ Disaggregating: ... \n");
@@ -142,7 +156,6 @@ int main(int argc, char * argv[]) {
         df_rr_daily,
         df_cps,
         p_gp,
-        p_coor,
         nrow_rr_d,
         ndays_h,
         nrow_cp);
@@ -158,6 +171,9 @@ int main(int argc, char * argv[]) {
     fclose(p_SSIM);
     time(&tm);
     printf("------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
-    fprintf(p_log, "------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
+    if (FLAG_LOG == 1)
+    {
+        fprintf(p_log, "------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
+    }
     return 0; 
 }

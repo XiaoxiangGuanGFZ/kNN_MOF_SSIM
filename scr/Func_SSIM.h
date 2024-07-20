@@ -44,4 +44,10 @@ double SSIM_L(
     int size
 );
 
+double Manhattan_distance(
+    double *rr_c,
+    double *rr_t,
+    int N_STATION
+);
+
 #endif

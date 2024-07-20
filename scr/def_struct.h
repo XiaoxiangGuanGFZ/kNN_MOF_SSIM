@@ -76,9 +76,11 @@ struct Para_global
         char FP_CP[200];        // file path of circulation pattern (CP) classification data series
         char FP_HOURLY[200];    // file path of hourly precipitation data (as fragments)
         char FP_OUT[200];       // file path of output(hourly) precipitation from disaggregation
+        
         char FP_LOG[200];       // file path of log file
         char FP_SSIM[200];      // file path of the output SSIM file
 
+        char SIMILARITY[10];    // the similarity index: Manhattan or SSIM
         int PREPROCESS;         // preprocess the data by normalization or standardization
         int N_STATION;          // number of stations (rain sites)
         
@@ -99,7 +101,7 @@ struct Para_global
         double power[3];        // 3 paras in SSIM
         double NODATA;          // nodata value
         int flag_SSIM;          // flag, whether to write SSIM 
-
+        int FLAG_LOG;           // flag, whether to write log
         int RUN;                // simulation runs 
     };
 

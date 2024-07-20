@@ -1,6 +1,6 @@
 /*
  * SUMMARY:      Func_Initialize.c
- * USAGE:        assign the seasonality, cp type and class 
+ * USAGE:        assign the seasonality, cp type and class
  * AUTHOR:       Xiaoxiang Guan
  * ORG:          Section Hydrology, GFZ
  * E-MAIL:       guan@gfz-potsdam.de
@@ -11,14 +11,14 @@
  * FUNCTIONS:    initialize_dfrr_d(); initialize_dfrr_h(); Toogle_CP();
  *               CP_classes();
  * COMMENTS:
- * 
+ *
  *
  */
 
 /************
- * 
- * 
-********************************************************************************/
+ *
+ *
+ ********************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,17 +26,16 @@
 #include <math.h>
 #include "def_struct.h"
 #include "Func_Initialize.h"
-#include "Func_Fragments.h"  // the wet-dry function
+#include "Func_Fragments.h" // the wet-dry function
 
 void initialize_dfrr_d(
     struct Para_global *p_gp,
     struct df_rr_d *p_rr_d,
     struct df_cp *p_cp,
     int nrow_rr_d,
-    int nrow_cp
-)
+    int nrow_cp)
 {
-    if (strncmp(p_gp->MONTH, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0) 
+    if (strncmp(p_gp->MONTH, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0)
     {
         printf("The disaggregation can only be conditioned on either MONTH or SEASON!\n");
         exit(1);
@@ -44,7 +43,7 @@ void initialize_dfrr_d(
 
     /*******
      * assign each day the cp value
-     */
+     *******/
     int N_CP_CLASS;
     int N_SM_CLASS;
     if (strncmp(p_gp->T_CP, "TRUE", 4) == 0)
@@ -66,14 +65,17 @@ void initialize_dfrr_d(
 
     /*******
      * assign each day the season (summer or winter) value
-     */
-    if (strncmp(p_gp->SEASON, "TRUE", 4) == 0) {
+     *******/
+    if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             if ((p_rr_d + i)->date.m >= p_gp->SUMMER_FROM && (p_rr_d + i)->date.m <= p_gp->SUMMER_TO)
             {
                 (p_rr_d + i)->SM = 1; // summer
-            } else {
+            }
+            else
+            {
                 (p_rr_d + i)->SM = 0; // winter
             }
         }
@@ -86,7 +88,9 @@ void initialize_dfrr_d(
             (p_rr_d + i)->SM = (p_rr_d + i)->date.m - 1;
         }
         N_SM_CLASS = 12;
-    } else {
+    }
+    else
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             (p_rr_d + i)->SM = 0;
@@ -97,13 +101,17 @@ void initialize_dfrr_d(
     if (N_SM_CLASS > 0 && N_CP_CLASS > 0)
     {
         p_gp->CLASS_N = N_SM_CLASS * N_CP_CLASS;
-    } else if (N_SM_CLASS > 0 && N_CP_CLASS == 0)
+    }
+    else if (N_SM_CLASS > 0 && N_CP_CLASS == 0)
     {
         p_gp->CLASS_N = N_SM_CLASS;
-    } else if (N_SM_CLASS == 0 && N_CP_CLASS > 0)
+    }
+    else if (N_SM_CLASS == 0 && N_CP_CLASS > 0)
     {
         p_gp->CLASS_N = N_CP_CLASS;
-    } else {
+    }
+    else
+    {
         p_gp->CLASS_N = 0;
     }
 
@@ -146,14 +154,12 @@ void initialize_dfrr_d(
     }
 }
 
-
 void initialize_dfrr_h(
     struct Para_global *p_gp,
     struct df_rr_h *p_rr_h,
     struct df_cp *p_cp,
     int nrow_rr_d,
-    int nrow_cp
-)
+    int nrow_cp)
 {
     if (strncmp(p_gp->MONTH, "TRUE", 4) == 0 && strncmp(p_gp->SEASON, "TRUE", 4) == 0)
     {
@@ -163,7 +169,7 @@ void initialize_dfrr_h(
 
     /*******
      * assign each day the cp value
-     */
+     *******/
     int N_CP_CLASS, N_SM_CLASS;
     if (strncmp(p_gp->T_CP, "TRUE", 4) == 0)
     {
@@ -184,14 +190,17 @@ void initialize_dfrr_h(
 
     /*******
      * assign each day the season (summer or winter) value
-    */
-    if (strncmp(p_gp->SEASON, "TRUE", 4) == 0) {
+     *******/
+    if (strncmp(p_gp->SEASON, "TRUE", 4) == 0)
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             if ((p_rr_h + i)->date.m >= p_gp->SUMMER_FROM && (p_rr_h + i)->date.m <= p_gp->SUMMER_TO)
             {
                 (p_rr_h + i)->SM = 1; // summer
-            } else {
+            }
+            else
+            {
                 (p_rr_h + i)->SM = 0; // winter
             }
         }
@@ -204,7 +213,9 @@ void initialize_dfrr_h(
             (p_rr_h + i)->SM = (p_rr_h + i)->date.m - 1;
         }
         N_SM_CLASS = 12;
-    } else {
+    }
+    else
+    {
         for (size_t i = 0; i < nrow_rr_d; i++)
         {
             (p_rr_h + i)->SM = 0;
@@ -213,14 +224,14 @@ void initialize_dfrr_h(
     }
 
     /******************
-     * time series is classified based on following combinations: 
+     * time series is classified based on following combinations:
      * - month alone
      * - season alone
      * - month and cp
      * - season and cp
      * - cp alone
      * - nothing
-     * ****/
+     * ****************/
 
     if (N_CP_CLASS > 0 && N_SM_CLASS > 0)
     {
@@ -252,13 +263,10 @@ void initialize_dfrr_h(
     }
 }
 
-
-
 int Toogle_CP(
     struct Date date,
     struct df_cp *p_cp,
-    int nrow_cp
-)
+    int nrow_cp)
 {
     /*************
      * Description:
@@ -272,19 +280,20 @@ int Toogle_CP(
      * **********/
     int i;
     int cp = -1;
-    for (i = 0; i < nrow_cp; i++) {
+    for (i = 0; i < nrow_cp; i++)
+    {
         if (
-            (p_cp+i)->date.y == date.y && (p_cp+i)->date.m == date.m && (p_cp+i)->date.d == date.d
-        ) {
-            cp = (p_cp+i)->cp;
+            (p_cp + i)->date.y == date.y && (p_cp + i)->date.m == date.m && (p_cp + i)->date.d == date.d)
+        {
+            cp = (p_cp + i)->cp;
             break; // terminate the loop directly
         }
     }
-    if (cp == -1) {
+    if (cp == -1)
+    {
         printf(
             "Program terminated: cannot find the cp class for the date %d-%02d-%02d\n",
-            date.y, date.m, date.d
-        );
+            date.y, date.m, date.d);
         exit(2);
     }
     return cp;
@@ -292,11 +301,10 @@ int Toogle_CP(
 
 int CP_classes(
     struct df_cp *p_cp,
-    int nrow_cp
-)
+    int nrow_cp)
 {
     // derive the number of circulation pattern classes
-    int cp_max=0;
+    int cp_max = 0;
     for (size_t i = 0; i < nrow_cp; i++)
     {
         if ((p_cp + i)->cp > cp_max)
@@ -317,8 +325,7 @@ void initialize_dfrr_wd(
     struct df_rr_d *p_rr_d,
     struct df_rr_h *p_rr_h,
     int ndays_d,
-    int ndays_h
-)
+    int ndays_h)
 {
     /*****
      * wet: 1
@@ -333,21 +340,19 @@ void initialize_dfrr_wd(
     {
         (p_rr_h + i)->wd = Toggle_WD(p_gp->N_STATION, (p_rr_h + i)->rr_d);
     }
-    
 }
 
 /**********************
  * view_class:
- * print the classes and corresponding sample sizes of both 
+ * print the classes and corresponding sample sizes of both
  * daily (to disaggregate) and hourly (fragments donor)
  * time series of the variable.
- * 
+ *
  * *********************/
 
 void view_class_rrd(
     struct df_rr_d *p_rr_d,
-    int nrow_rr_d
-)
+    int nrow_rr_d)
 {
     int n_classes = 0;
     for (size_t i = 0; i < nrow_rr_d; i++)
@@ -357,13 +362,13 @@ void view_class_rrd(
             n_classes = (p_rr_d + i)->class;
         }
     }
-    n_classes += 1;  // the total number of classes the time series is categorized into. 
+    n_classes += 1; // the total number of classes the time series is categorized into.
 
     int *counts;
     counts = (int *)malloc(sizeof(int) * n_classes);
     for (size_t i = 0; i < n_classes; i++)
     {
-        // initialize 
+        // initialize
         *(counts + i) = 0;
     }
 
@@ -377,31 +382,43 @@ void view_class_rrd(
             }
         }
     }
-    
+
     /**********************************
      * print the counts of each class to screen
-     */
-    printf("* class-counts:\n   - class: "); fprintf(p_log, "* class-counts:\n   - class: ");
+     *******/
+    printf("* class-counts:\n   - class: ");
     for (size_t t = 0; t < n_classes; t++)
     {
-        printf("%5ld ", t + 1); fprintf(p_log, "%5ld ", t + 1);
+        printf("%5ld ", t + 1);
     }
-    printf("\n"); fprintf(p_log, "\n");
+    printf("\n");
+    printf("   - count: ");
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        printf("%5d ", *(counts + t));
+    }
+    printf("\n");
 
-    printf("   - count: "); fprintf(p_log, "   - count: ");
-    for (size_t t = 0; t < n_classes; t++)
+    if (FLAG_LOG == 1)
     {
-        printf("%5d ", *(counts + t)); fprintf(p_log, "%5d ", *(counts + t));
+        fprintf(p_log, "* class-counts:\n   - class: ");
+        for (size_t t = 0; t < n_classes; t++)
+        {
+            fprintf(p_log, "%5ld ", t + 1);
+        }
+        fprintf(p_log, "\n");
+        fprintf(p_log, "   - count: ");
+        for (size_t t = 0; t < n_classes; t++)
+        {
+            fprintf(p_log, "%5d ", *(counts + t));
+        }
+        fprintf(p_log, "\n");
     }
-    printf("\n"); fprintf(p_log, "\n");
-    
 }
-
 
 void view_class_rrh(
     struct df_rr_h *p_rr_h,
-    int nrow_rr_d
-)
+    int nrow_rr_d)
 {
     int n_classes = 0;
     for (size_t i = 0; i < nrow_rr_d; i++)
@@ -411,13 +428,13 @@ void view_class_rrh(
             n_classes = (p_rr_h + i)->class;
         }
     }
-    n_classes += 1;  // the total number of classes the time series is categorized into. 
+    n_classes += 1; // the total number of classes the time series is categorized into.
 
     int *counts;
     counts = (int *)malloc(sizeof(int) * n_classes);
     for (size_t i = 0; i < n_classes; i++)
     {
-        // initialize 
+        // initialize
         *(counts + i) = 0;
     }
 
@@ -431,44 +448,62 @@ void view_class_rrh(
             }
         }
     }
-    
+
     /**********************************
      * print the counts of each class to screen
-     */
-    printf("* class-counts:\n   - class: "); fprintf(p_log, "* class-counts:\n   - class: ");
+     *******/
+    printf("* class-counts:\n   - class: ");
     for (size_t t = 0; t < n_classes; t++)
     {
-        printf("%5ld ", t + 1); fprintf(p_log, "%5ld ", t + 1);
+        printf("%5ld ", t + 1);
     }
-    printf("\n"); fprintf(p_log, "\n");
+    printf("\n");
+    printf("   - count: ");
+    for (size_t t = 0; t < n_classes; t++)
+    {
+        printf("%5d ", *(counts + t));
+    }
+    printf("\n");
 
-    printf("   - count: "); fprintf(p_log, "   - count: ");
-    for (size_t t = 0; t < n_classes; t++)
+    if (FLAG_LOG == 1)
     {
-        printf("%5d ", *(counts + t)); fprintf(p_log, "%5d ", *(counts + t));
+        fprintf(p_log, "* class-counts:\n   - class: ");
+        for (size_t t = 0; t < n_classes; t++)
+        {
+            fprintf(p_log, "%5ld ", t + 1);
+        }
+        fprintf(p_log, "\n");
+        fprintf(p_log, "   - count: ");
+        for (size_t t = 0; t < n_classes; t++)
+        {
+            fprintf(p_log, "%5d ", *(counts + t));
+        }
+        fprintf(p_log, "\n");
     }
-    printf("\n"); fprintf(p_log, "\n");
 }
 
 /*********************
- * coordinates of weather sites 
+ * coordinates of weather sites
  * in this multi-site disaggregation algorithm
  * ****************/
 void initialize_df_coor(
     struct Para_global *p_gp,
     struct df_coor **p_coor,
-    int nrow_coor
-)
+    int nrow_coor)
 {
     if (nrow_coor != p_gp->N_STATION)
     {
         printf("FP_COOR: rainsite number contradiction between FP_COOR and data files!\n");
         exit(1);
-    } else {
-        double *distance; double d_temp;
-        int *id; int id_temp;
+    }
+    else
+    {
+        double *distance;
+        double d_temp;
+        int *id;
+        int id_temp;
         int n_neighbors;
-        n_neighbors = nrow_coor - 1;  // number of neighbouring rain site in total
+        n_neighbors = nrow_coor - 1; // number of neighbouring rain site in total
         distance = (double *)malloc(sizeof(double) * n_neighbors);
         id = (int *)malloc(sizeof(int) * n_neighbors);
 
@@ -490,12 +525,11 @@ void initialize_df_coor(
                 if (i != j)
                 {
                     *(distance + t) = COOR_distance(
-                        (*p_coor + i)->lon, (*p_coor + i)->lat, 
-                        (*p_coor + j)->lon, (*p_coor + j)->lat
-                    );
+                        (*p_coor + i)->lon, (*p_coor + i)->lat,
+                        (*p_coor + j)->lon, (*p_coor + j)->lat);
                     *(id + t) = j;
                     t += 1;
-                }                
+                }
             }
 
             // sorting the distance vector in the increasing order
@@ -524,18 +558,15 @@ void initialize_df_coor(
         free(id);
         free(distance);
     }
-    
 }
 
 double COOR_distance(
     double lon1,
     double lat1,
     double lon2,
-    double lat2
-)
+    double lat2)
 {
     double d;
     d = pow((lon1 - lon2), 2) + pow(lat1 - lat2, 2);
     return d;
 }
-

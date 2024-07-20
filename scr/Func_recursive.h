@@ -8,7 +8,6 @@ void kNN_MOF_SSIM_Recursive(
     struct df_rr_d *p_rrd,
     struct df_cp *p_cp,
     struct Para_global *p_gp,
-    struct df_coor *p_coor,
     int nrow_rr_d,
     int ndays_h,
     int nrow_cp);

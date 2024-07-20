@@ -190,3 +190,18 @@ double SSIM_L(
     }
     return L;
 }
+
+double Manhattan_distance(
+    double *rr_c,
+    double *rr_t,
+    int N_STATION
+)
+{
+    int i;
+    double distance = 0;
+    for (i = 0; i < N_STATION; i++)
+    {
+        distance += abs(*(rr_c + i) - *(rr_t + i));
+    }
+    return distance;
+}

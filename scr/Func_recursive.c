@@ -42,7 +42,6 @@ void kNN_MOF_SSIM_Recursive(
     struct df_rr_d *p_rrd,
     struct df_cp *p_cp,
     struct Para_global *p_gp,
-    struct df_coor *p_coor,
     int nrow_rr_d,
     int ndays_h,
     int nrow_cp)
@@ -107,19 +106,16 @@ void kNN_MOF_SSIM_Recursive(
              * - n_can: the number of candidates after wet-dry status filtering
              * ********/
             n_can = Filter_WD_Class(p_rrh, p_rrd, i, ndays_h, pool_cans);
-
             // sample from candidate pool and assign the fragments simultaneously
             for (int t = 0; t < p_gp->RUN; t++)
             {
                 int depth = 0;
                 seed_random();
                 Initialize_output(&df_rr_h_out, p_gp, p_rrd, i); // View_df_h(&df_rr_h_out, p_gp->N_STATION);
-                kNN_SSIM_sampling_recursive(p_rrd, p_rrh, p_gp, &df_rr_h_out,
-                                            i, pool_cans, n_can, &WD, &depth);
+                kNN_SSIM_sampling_recursive(p_rrd, p_rrh, p_gp, &df_rr_h_out, i, pool_cans, n_can, &WD, &depth);
                 Write_df_rr_h(&df_rr_h_out, p_gp, p_FP_OUT, t + 1); /* write the disaggregation output */
             }
         }
-
         printf("%d-%02d-%02d: Done!\n", (p_rrd + i)->date.y, (p_rrd + i)->date.m, (p_rrd + i)->date.d);
     }
     fclose(p_FP_OUT);
@@ -161,37 +157,55 @@ void kNN_SSIM_sampling_recursive(
     int *pool_cans_final;
     int n_can_final;
     pool_cans_final = (int *)malloc(sizeof(int) * n_can);
-    if (*depth >= 5) {
-        *WD = 1;
-    }
+    if (*depth >= 5) {*WD = 1;}
     *depth += 1;
     n_can_final = Filter_WD_multisite(p_rrh, p_out->rr_d, p_gp->N_STATION, n_can, pool_cans, pool_cans_final, *WD);
+    if (n_can_final == 0)
+    {
+        printf("No candidae after multi-site wet-dry status filtering!\n");
+        exit(0);
+    }
+    
     // printf("n_can_final: %d\n", n_can_final);
     int i; 
     double *SSIM; 
     SSIM = (double *)malloc(n_can_final * sizeof(double));
     /** compute mean-SSIM between target and candidate images **/
-    if (p_gp->PREPROCESS == 1)
+    if (p_gp->PREPROCESS == 1 && strcmp(p_gp->SIMILARITY, "SSIM") == 0)
     {
         for (i = 0; i < n_can_final; i++)
         {
-            *(SSIM + i) = meanSSIM(
-                p_out->rr_d_pre,
-                (p_rrh + pool_cans_final[i])->rr_d_pre,
-                p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-        }
-    } else if (p_gp->PREPROCESS == 0)
-    {
-        for (i = 0; i < n_can_final; i++)
-        {
-            *(SSIM + i) = meanSSIM(
-                p_out->rr_d,
-                (p_rrh + pool_cans_final[i])->rr_d,
-                p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+            *(SSIM + i) = meanSSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
         }
     }
-    
+    else if (p_gp->PREPROCESS == 0 && strcmp(p_gp->SIMILARITY, "SSIM") == 0)
+    {
+        for (i = 0; i < n_can_final; i++)
+        {
+            *(SSIM + i) = meanSSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+        }
+    }
+    else if (p_gp->PREPROCESS == 1 && strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
+    {
+        for (i = 0; i < n_can_final; i++)
+        {
+            *(SSIM + i) = Manhattan_distance(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->N_STATION);
+        }
+    }
+    else if (p_gp->PREPROCESS == 0 && strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
+    {
+        for (i = 0; i < n_can_final; i++)
+        {
+            *(SSIM + i) = Manhattan_distance(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->N_STATION);
+        }
+    }
+
     int order = 1; // 1: larger SSIM, heavier weight; 0: larger distance, less weight
+    if (strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
+    {
+        order = 0;
+    }
+    
     int run = 1;   // sample one candidate each time
     int index_fragment;
     kNN_sampling(SSIM, pool_cans_final, order, n_can_final, run, &index_fragment);

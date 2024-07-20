@@ -5,7 +5,7 @@
 
 # ------- disaggregation setup ---------
 # the file path and name of rain site coordinates 
-FP_COOR,D:/kNN_MOF_SSIM/data/Rainsite_COOR.csv
+# FP_COOR,D:/kNN_MOF_SSIM/data/Rainsite_COOR.csv
 
 # the file path and name of daily rr data to be disaggregated
 FP_DAILY,D:/kNN_MOF_SSIM/data/rr_sim_daily.csv
@@ -19,16 +19,20 @@ FP_HOURLY,D:/kNN_MOF_SSIM/data/rr_obs_hourly.csv
 # the file path and name to store the disaggregated hourly rr results
 FP_OUT,D:/kNN_MOF_SSIM/output/rr_sim_hourly.csv
 
-# the file path and name to store the running log info
-FP_LOG,D:/kNN_MOF_SSIM/my.log
+# the file path and name to store the running log info # D:/kNN_MOF_SSIM/my.log
+# if FP_LOG == FALSE, then the programm is not logged
+FP_LOG,FALSE
 
-# the file path and name to store the largest k SSIM in candidates filtering
-# when FP_SSIM == FALSE, no SSIM is exported from the program
-FP_SSIM,D:/kNN_MOF_SSIM/output/SSIM.csv
+# the file path and name to store the largest k SSIM in candidates filtering # D:/kNN_MOF_SSIM/output/SSIM.csv
+# when FP_SSIM == FALSE, no SSIM is exported from the program 
+FP_SSIM,FALSE
 
 # ------- the parameters in kNN_MOF_SSIM algorithm ---------
 # preprocessing of the data: none [0], normalization [1] or standardization [2]
 PREPROCESS,0
+
+# the similarity measure for candidate day resampling: SSIM or Manhattan (distance)
+SIMI,Manhattan
 
 # number of the rain stations
 N_STATION,134

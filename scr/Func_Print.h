@@ -2,6 +2,7 @@
 #define FUNC_PRINT
 
 extern FILE *p_log;  // file pointer pointing to log file
+extern int FLAG_LOG;
 
 void Print_gp(
     struct Para_global *p_gp
