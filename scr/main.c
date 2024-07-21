@@ -168,7 +168,9 @@ int main(int argc, char * argv[]) {
     //     nrow_rr_d,
     //     ndays_h,
     //     nrow_cp);
-    fclose(p_SSIM);
+    if (p_gp->flag_SSIM == 1){
+        fclose(p_SSIM);
+    }
     time(&tm);
     printf("------ Disaggregation daily2hourly (Done): %s", ctime(&tm));
     if (FLAG_LOG == 1)
