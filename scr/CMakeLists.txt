@@ -10,6 +10,7 @@ set(SOURCE_FILES
     Func_dataIO.c
     Func_Initialize.c
     Func_SSIM.c
+    Func_ASSIM.c
     Func_Disaggregate.c
     Func_kNN.c
     Func_Fragments.c
