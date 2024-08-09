@@ -37,6 +37,7 @@
 #include "Func_kNN.h"
 #include "Func_Fragments.h"
 #include "Func_Recursive.h"
+#include "Func_wSSIM.h"
 
 void kNN_MOF_SSIM_Recursive(
     struct df_rr_h *p_rrh,
@@ -177,7 +178,9 @@ void kNN_SSIM_sampling_recursive(
         for (i = 0; i < n_can_final; i++)
         {
             // *(SSIM + i) = meanSSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-            *(SSIM + i) = ASSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
+            // *(SSIM + i) = ASSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
+            *(SSIM + i) = weightSSIM_Gaussian(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+            // *(SSIM + i) = weightSSIM_ExpoDecay(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
         }
     }
     else if (p_gp->PREPROCESS == 0 && strcmp(p_gp->SIMILARITY, "SSIM") == 0)
@@ -185,7 +188,9 @@ void kNN_SSIM_sampling_recursive(
         for (i = 0; i < n_can_final; i++)
         {
             // *(SSIM + i) = meanSSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-            *(SSIM + i) = ASSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
+            // *(SSIM + i) = ASSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
+            *(SSIM + i) = weightSSIM_Gaussian(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+            //  *(SSIM + i) = weightSSIM_ExpoDecay(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
         }
     }
     else if (p_gp->PREPROCESS == 1 && strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
