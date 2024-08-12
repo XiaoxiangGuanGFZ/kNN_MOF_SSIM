@@ -11,7 +11,7 @@
  *               - the similarity is represented by SSIM (structural Similarity Index Measure)
  *               - kNN is used to consider the uncertainty or variability
  * DESCRIP-END.
- * FUNCTIONS:    kNN_MOF_SSIM_Recursive(); 
+ * FUNCTIONS:    kNN_MOF_SSIM_Recursive();
  *
  * COMMENTS:
  *
@@ -20,7 +20,7 @@
 
 /*******************************************************************************
  * VARIABLEs:
- * 
+ *
  *****/
 
 #include <stdio.h>
@@ -60,7 +60,7 @@ void kNN_MOF_SSIM_Recursive(
     int i, j, h, k, s, Toggle_wd;
     int class_t, class_c;
 
-    struct df_rr_h df_rr_h_out; // this is a struct variable, not a struct array;
+    struct df_rr_h df_rr_h_out;                                      // this is a struct variable, not a struct array;
     df_rr_h_out.rr_h = calloc(p_gp->N_STATION, sizeof(double) * 24); // allocate memory (stack);
     df_rr_h_out.rr_d = calloc(p_gp->N_STATION, sizeof(double));
     df_rr_h_out.rr_d_pre = calloc(p_gp->N_STATION, sizeof(double));
@@ -77,7 +77,7 @@ void kNN_MOF_SSIM_Recursive(
     int n_can;             // the number of candidates after all conditioning (cp and seasonality)
     int fragment;          // the index of df_rr_h structure with the final chosed fragments
     int WD;
-    
+
     FILE *p_FP_OUT;
     if ((p_FP_OUT = fopen(p_gp->FP_OUT, "w")) == NULL)
     {
@@ -87,7 +87,7 @@ void kNN_MOF_SSIM_Recursive(
     for (i = 0; i < nrow_rr_d; i++) // iterate each target day
     {
         WD = p_gp->WD;
-        Toggle_wd = 0;                                                   // initialize with 0 (non-rainy)
+        Toggle_wd = 0; // initialize with 0 (non-rainy)
         Toggle_wd = Toggle_WD(p_gp->N_STATION, (p_rrd + i)->p_rr);
         if (Toggle_wd == 0)
         {
@@ -103,7 +103,7 @@ void kNN_MOF_SSIM_Recursive(
         else
         {
             /**********
-             * filtering: 
+             * filtering:
              * - class: cp type, 12 months, or season (winter or summer)
              * - n_can: the number of candidates after wet-dry status filtering
              * ********/
@@ -132,10 +132,9 @@ void kNN_SSIM_sampling_recursive(
     int pool_cans[],
     int n_can,
     int *WD,
-    int *depth
-)
+    int *depth)
 {
-/**************
+    /**************
      * Description:
      *      - compute the SSIM index of rr between target and candidate days
      *      - sort the distance in the decreasing order
@@ -159,7 +158,10 @@ void kNN_SSIM_sampling_recursive(
     int *pool_cans_final;
     int n_can_final;
     pool_cans_final = (int *)malloc(sizeof(int) * n_can);
-    if (*depth >= 5) {*WD = 1;}
+    if (*depth >= 5)
+    {
+        *WD = 1;
+    }
     *depth += 1;
     n_can_final = Filter_WD_multisite(p_rrh, p_out->rr_d, p_gp->N_STATION, n_can, pool_cans, pool_cans_final, *WD);
     if (n_can_final == 0)
@@ -167,44 +169,87 @@ void kNN_SSIM_sampling_recursive(
         printf("No candidae after multi-site wet-dry status filtering!\n");
         exit(0);
     }
-    
+
     // printf("n_can_final: %d\n", n_can_final);
-    int i; 
-    double *SSIM; 
+    int i;
+    double *SSIM;
     SSIM = (double *)malloc(n_can_final * sizeof(double));
     /** compute mean-SSIM between target and candidate images **/
-    if (p_gp->PREPROCESS == 1 && strcmp(p_gp->SIMILARITY, "SSIM") == 0)
+    if (strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
     {
-        for (i = 0; i < n_can_final; i++)
+        if (p_gp->PREPROCESS == 0)
         {
-            // *(SSIM + i) = meanSSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-            // *(SSIM + i) = ASSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
-            *(SSIM + i) = weightSSIM_Gaussian(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-            // *(SSIM + i) = weightSSIM_ExpoDecay(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+            for (i = 0; i < n_can_final; i++)
+            {
+                *(SSIM + i) = Manhattan_distance(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->N_STATION);
+            }
+        }
+        else
+        {
+            for (i = 0; i < n_can_final; i++)
+            {
+                *(SSIM + i) = Manhattan_distance(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->N_STATION);
+            }
         }
     }
-    else if (p_gp->PREPROCESS == 0 && strcmp(p_gp->SIMILARITY, "SSIM") == 0)
+    else
     {
-        for (i = 0; i < n_can_final; i++)
+        // similarity metric: SSIM-based
+        if (p_gp->PREPROCESS == 0)
         {
-            // *(SSIM + i) = meanSSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-            // *(SSIM + i) = ASSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
-            *(SSIM + i) = weightSSIM_Gaussian(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
-            //  *(SSIM + i) = weightSSIM_ExpoDecay(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+            if (strcmp(p_gp->SIMILARITY, "mSSIM") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = meanSSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+                }
+            } else if (strcmp(p_gp->SIMILARITY, "aSSIM") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = ASSIM(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
+                }
+            } else if (strcmp(p_gp->SIMILARITY, "wSSIM_g") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = weightSSIM_Gaussian(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+                }
+            } else if (strcmp(p_gp->SIMILARITY, "wSSIM_e") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = weightSSIM_ExpoDecay(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+                }
+            } 
         }
-    }
-    else if (p_gp->PREPROCESS == 1 && strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
-    {
-        for (i = 0; i < n_can_final; i++)
+        else
         {
-            *(SSIM + i) = Manhattan_distance(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->N_STATION);
-        }
-    }
-    else if (p_gp->PREPROCESS == 0 && strcmp(p_gp->SIMILARITY, "Manhattan") == 0)
-    {
-        for (i = 0; i < n_can_final; i++)
-        {
-            *(SSIM + i) = Manhattan_distance(p_out->rr_d, (p_rrh + pool_cans_final[i])->rr_d, p_gp->N_STATION);
+            if (strcmp(p_gp->SIMILARITY, "mSSIM") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = meanSSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+                }
+            } else if (strcmp(p_gp->SIMILARITY, "aSSIM") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = ASSIM(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->power, 0.1);
+                }
+            } else if (strcmp(p_gp->SIMILARITY, "wSSIM_g") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = weightSSIM_Gaussian(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+                }
+            } else if (strcmp(p_gp->SIMILARITY, "wSSIM_e") == 0)
+            {
+                for (i = 0; i < n_can_final; i++)
+                {
+                    *(SSIM + i) = weightSSIM_ExpoDecay(p_out->rr_d_pre, (p_rrh + pool_cans_final[i])->rr_d_pre, p_gp->NODATA, p_gp->N_STATION, p_gp->k, p_gp->power);
+                }
+            } 
         }
     }
 
@@ -213,11 +258,11 @@ void kNN_SSIM_sampling_recursive(
     {
         order = 0;
     }
-    
-    int run = 1;   // sample one candidate each time
+
+    int run = 1; // sample one candidate each time
     int index_fragment;
     kNN_sampling(SSIM, pool_cans_final, order, n_can_final, run, &index_fragment);
-    
+
     // printf("n_can: %d, fragment: %d\n", n_can_final, index_fragment);
     Fragment_assign_recursive(p_rrh, p_out, p_rrd, p_gp, index_target, index_fragment);
     if (Toggle_WD(p_gp->N_STATION, p_out->rr_d) == 1)
@@ -233,8 +278,7 @@ void Initialize_output(
     struct df_rr_h *p_out,
     struct Para_global *p_gp,
     struct df_rr_d *p_rrd,
-    int index_target
-)
+    int index_target)
 {
     p_out->date = (p_rrd + index_target)->date;
     for (int j = 0; j < p_gp->N_STATION; j++)
@@ -278,8 +322,9 @@ void Fragment_assign_recursive(
     for (j = 0; j < p_gp->N_STATION; j++)
     {
         if (p_out->rr_d[j] > 0)
-        {   // wet site
-            if ((p_rrh + fragment)->rr_d[j] > 0.0){
+        { // wet site
+            if ((p_rrh + fragment)->rr_d[j] > 0.0)
+            {
                 // the same site in candidate day is also wet, then disaggregate it
                 for (h = 0; h < 24; h++)
                 {
@@ -298,4 +343,3 @@ void Fragment_assign_recursive(
         }
     }
 }
-

@@ -93,15 +93,6 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    /****** import rainsite coor *******/
-    // struct df_coor *p_coor;
-    // int nrow_coor;
-    // p_coor = (struct df_coor *)malloc(sizeof(struct df_coor) * p_gp->N_STATION * 2);
-    // nrow_coor = import_df_coor(p_gp->FP_COOR, p_coor);
-    // initialize_df_coor(p_gp, &p_coor, nrow_coor);
-    // time(&tm); printf("------ Import rainsite coor (Done): %s", ctime(&tm)); 
-    // fprintf(p_log, "------ Import rainsite coor (Done): %s", ctime(&tm));
-
     /****** import daily rainfall data (to be disaggregated) *******/
     
     static struct df_rr_d df_rr_daily[MAXrow];

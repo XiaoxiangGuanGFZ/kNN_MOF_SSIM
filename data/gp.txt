@@ -32,7 +32,12 @@ FP_SSIM,FALSE
 PREPROCESS,0
 
 # the similarity measure for candidate day resampling: SSIM or Manhattan (distance)
-SIMI,Manhattan
+# - Manhattan: Manhattan distance, sum of absolute differences 
+# - mSSIM: mean structural similarity index measure
+# - aSSIM: amplitude SSIM
+# - wSSIM_g: weighted SSIM with Gaussian weight function
+# - wSSIM_e: weighted SSIM with Exponential decay weight function
+SIMI,aSSIM
 
 # number of the rain stations
 N_STATION,134
@@ -42,12 +47,12 @@ N_STATION,134
 T_CP,FALSE
 
 # MONTH == TRUE, the disaggregation is conditioned on 12 months, and T_CP should be set as FALSE. 
-MONTH,FALSE
+MONTH,TRUE
 
 # SEASON, SUMMER_FROM, and SUMMER_TO: only valid when MONTH == FALSE; 
 # SEASON == TRUE, meaning that the disaggregation is also conditioned on two seasons: summer and winter 
 
-SEASON,TRUE
+SEASON,FALSE
 
 # Two arguments to define the two seasons 
 # summer: from May to October (5-10)
@@ -66,7 +71,7 @@ CONTINUITY,1
 # WD:-1 no restriction in terms of wet-dry status, calculate the SSIM as long as the candidate is wet in some sites
 WD,-1
 
-# Structural Similarity Index (SSIM) parameters
+# Structural Similarity Index (SSIM) parameters, valid for SSIM methods
 SSIM_K,0.01,0.03,0.0212
 
 SSIM_POWER,1,1,1
