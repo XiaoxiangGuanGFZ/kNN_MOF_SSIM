@@ -21,6 +21,16 @@ Structural Similarity Index Measure (SSIM) is a perceptual metric originally dev
 
 In this program, besides the SSIM-based metric, Manhattan distance can also be applied as the similarity measure in candidate sampling. 
 
+### 2.4 wet-dry status filtering strategy
+
+three strategies are provided to select the candidate days based on flexibility level with different levels of flexibility:
+
+- 0, very strict: only the candidates with exact the same wet-dry status of target day can be selected
+- 1, flexible: the candidates with same wet-dry status covering that of target day will be selected
+- -1, no restriction in terms of wet-dry status: calculate the similarity measure for alll wet days
+
+See Guan (2025) for more explanation. 
+
 ## 3. How to use
 
 ### 3.1 Compile and run
