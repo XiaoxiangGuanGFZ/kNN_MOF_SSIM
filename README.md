@@ -1,44 +1,48 @@
+# kNN_MOF_SSIM
+k-nearest resampling (kNN) and method-of-fragments (MOF) based rainfall temporal disaggregation model conditioned on Structural Similarity Index Measure (SSIM)
 
+## 1. Introduction
 
-## Algorithm
+A temporal disaggregation model is usually used to derive sub-daily (like hourly) distributions of weather variables from daily scale. kNN_MOF_SSIM is a non-parametric dtsaggregation procedure developed for multisite daily-to-hourly rainfall disaggregation. In the procedure, mothod of fragments (MOF) based on k-nearest neighbor resampling is applied. 
 
-- k-nearest neighbor sampling
-- method-of-fragments
-- continuity: 1 day or 3 days
-- conditioned on seasonality (12 months) or circulation patterns
-- similarity measure: Structural Similarity Index Measure (SSIM)
-- flexible wet-dry status filtering; 
+## 2. Techniques
 
-the disaggregation strategy:
+### 2.1 Method Of Fragements
 
-- borrow fragments from rainy neighbors
-- disaggregate the multisite rainfall in a recursive manner
+The idea of MOF is to resample a vector of fragments that represents the relative distribution of subdaily to daily rainfall (Pui et al., 2012). The number of fragments corresponds to the subdaily temporal resolution used, i.e. if the disaggregation is conducted from daily to hourly resolution, the relative distribution of subdaily values consists of 24 relative weights that sum up to 1
 
+### 2.2 k-Nearest Neighbor algorithm
 
-## Evaluation
+The k-nearest neighbors algorithm, also known as KNN or k-NN, is a non-parametric, supervised learning classifier, which uses proximity to make classifications or predictions about the grouping of an individual data point.
 
-* evaluate at annual scale, rather than year by year. 
-* compare with kNN_MOF_cp (NOT)
-* apply the model at gridded based domain, like Eobs or RADOLAN
-* site scale: skewness, lag-1 autocorrelation, mean, standard deviation, intersite correlation, extremes
-* areal scale: aggregtaed to areal average rainfall 
-* WEI scale: spatially and temporally integrated index
+### 2.3 SSIM
 
-## to-do list (ideas)
+Structural Similarity Index Measure (SSIM) is a perceptual metric originally developed for image quality assessment, which compares the similarity between two images by considering changes in structure, luminance, and contrast. Unlike traditional pixel-based metrics, such as Manhattan distance or Mean Squared Error (MSE), which only measure point-to-point differences, mSSIM focuses on the perceived visual quality by capturing structural information. The advantage of using mSSIM in the context of rainfall disaggregation is its ability to evaluate the spatial consistency and structural patterns of rainfall events across different sites. 
 
-use SSIM as the similarity metric to select the candidate recursively until
-all the rainy (wet) sites are disaggregated.
+In this program, besides the SSIM-based metric, Manhattan distance can also be applied as the similarity measure in candidate sampling. 
 
-from this strategy, the mean and skewness are well reproduced in the disaggregation model.
-but, the standard deviation, and the lag-1 autocorrelation are not well represented in the model.
+## 3. How to use
 
-so, how should we improve the model's performance in especially terms of sd.
+### 3.1 Compile and run
 
-continuity -> acf1
-? -> sd
+- the program is written in c, with the compiler: gcc version 6.3.0 (MinGW.org GCC-6.3.0-1)
+- CMake method: nevigate to the `scr` folder and you can find `CMakeLists.txt` file there and then call cmake tool `cmake .` to generate the necessary build files (one of them is `Makefile`), at last call `make` to produce the executable `kNN_MOF_SSIM.exe` (the name specified in `CMakeLists.txt`) in Windows OS or `kNN_MOF_SSIM` in Unix-like systems.
+- `./kNN_MOF_cp.exe /path/to/gp.txt` to run the disaggregation, where `gp.txt` is an external file providing necessary arguments to run the program.
 
-what if we apply the recursive disaggregation on gridd-based rainfall: RADOLAN
+### 3.2 Global parameter file
 
-how deep the function goes to redistribute the daily multisite rainfall completely?
-(depth)
+`gp.txt` provides the key parameters controlling behaviors of the disaggregation, including file path and algorithm parameters. Detailed comments and explanation can be found in the example file `./data/gp.txt`.
+Lines starting with the letter # are comment lines, ignored by the program.
 
+## 4. Paper related
+
+## 5. References
+
+Pui, A., Sharma, A., Mehrotra, R., Sivakumar, B. and Jeremiah, E.  2012.  A comparison of alternatives for daily to sub-daily rainfall disaggregation. Journal of Hydrology, 470-471, 138-157. doi: https://doi.org/10.1016/j.jhydrol.2012.08.041.
+
+Xiaoxiang Guan, Katrin Nissen, Viet Dung Nguyen, Bruno Merz, Benjamin Winter, Sergiy Vorogushyn. Multisite temporal rainfall disaggregation using methods of fragments conditioned on circulation patterns. Journal of Hydrology, 621, 129640. doi: https://doi.org/10.1016/j.jhydrol.2023.129640
+
+## Author
+[Xiaoxiang Guan](https://www.gfz-potsdam.de/staff/guan.xiaoxiang/sec44)
+
+Email: guan@gfz-potsdam.de
